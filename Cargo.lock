@@ -675,6 +675,7 @@ version = "0.1.0"
 dependencies = [
  "parking_lot 0.10.2",
  "serde",
+ "serde_json",
  "tokio",
  "warp",
 ]
