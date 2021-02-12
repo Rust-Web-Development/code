@@ -1,4 +1,15 @@
-use warp::{Filter, filters::body::BodyDeserializeError, reject::Reject, Rejection, Reply, http::StatusCode};
+use warp::{
+    Filter, 
+    http::Method, 
+    filters::{
+        body::BodyDeserializeError,
+        cors::CorsForbidden,
+    }, 
+    reject::Reject, 
+    Rejection, 
+    Reply, 
+    http::StatusCode
+};
 use serde::Serialize;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -7,37 +18,24 @@ use parking_lot::RwLock;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Question {
-    id: String,
+    id: QuestionId,
     title: String,
     content: String,
     tags: Option<Vec<String>>,
-    comments: Option<Vec<CommentId>>,
-    upvotes: Option<Vec<String>>,
 }
-
-#[derive(Serialize)]
-struct Answer {
-    id: String,
-    question_id: String,
-    content: String,
-    comments: Vec<CommentId>,
-    upvotes: Vec<String>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-struct CommentId(String);
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+struct QuestionId(String);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Comment {
+struct Answer {
     id: String,
     content: String,
-    related_to: String,
-    relation_id: String,
+    question_id: String,
 }
 #[derive(Clone)]
 struct Store {
-    questions: Arc<RwLock<HashMap<String, Question>>>,
-    comments: Arc<RwLock<HashMap<String, Comment>>>,
+    questions: Arc<RwLock<HashMap<QuestionId, Question>>>,
+    answers: Arc<RwLock<HashMap<String, Answer>>>,
 }
 #[derive(Debug)]
 struct Pagination {
@@ -68,11 +66,11 @@ impl Store {
     fn new() -> Self {
         Store {
             questions: Arc::new(RwLock::new(Self::init())),
-            comments: Arc::new(RwLock::new(HashMap::new())),
+            answers: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    fn init() -> HashMap<String, Question> {
+    fn init() -> HashMap<QuestionId, Question> {
         let file = include_str!("../questions.json");
         serde_json::from_str(file).expect("can't read questions.json")
     }
@@ -102,7 +100,7 @@ async fn get_questions(params: HashMap<String, String>, store: Store) -> Result<
 }
 
 async fn update_question(id: String, store: Store, question: Question) -> Result<impl warp::Reply, warp::Rejection> { 
-    match store.questions.write().get_mut(&id) {
+    match store.questions.write().get_mut(&QuestionId(id)) {
         Some(q) => *q = question,
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -115,7 +113,7 @@ async fn update_question(id: String, store: Store, question: Question) -> Result
 
 
 async fn delete_question(id: String, store: Store) -> Result<impl warp::Reply, warp::Rejection> { 
-    match store.questions.write().remove(&id) {
+    match store.questions.write().remove(&QuestionId(id)) {
         Some(_) => (),
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -135,27 +133,32 @@ async fn add_question(store: Store, question: Question) -> Result<impl warp::Rep
     ))
 }
 
-async fn  add_comment(store: Store, params: HashMap<String, String>) -> Result<impl warp::Reply, warp::Rejection> { 
-    let comment = Comment {
+async fn  add_answer(store: Store, params: HashMap<String, String>) -> Result<impl warp::Reply, warp::Rejection> { 
+    let answer = Answer {
         id: "CI001".to_string(),
         content: params.get("content").unwrap().to_string(),
-        related_to: params.get("relatedTo").unwrap().to_string(),
-        relation_id: params.get("relationId").unwrap().to_string(),
+        question_id: params.get("questionId").unwrap().to_string(),
     };
 
-    store.comments.write().insert(comment.clone().id, comment);
+    store.answers.write().insert(answer.clone().id, answer);
     
     Ok(warp::reply::with_status(
-        "Comment added",
+        "Answer added",
         StatusCode::OK,
     ))
 }
 
 async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {   
+    println!("{:?}", r);
     if let Some(error) = r.find::<Error>() {
         Ok(warp::reply::with_status(
             error.to_string(),
             StatusCode::UNPROCESSABLE_ENTITY
+        ))
+    } else if let Some(error) = r.find::<CorsForbidden>() {
+        Ok(warp::reply::with_status(
+            error.to_string(),
+            StatusCode::FORBIDDEN
         ))
     } else if let Some(error) = r.find::<BodyDeserializeError>() {
         Ok(warp::reply::with_status(
@@ -174,6 +177,11 @@ async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
 async fn main() {
     let store = Store::new();
     let store_filter = warp::any().map(move || store.clone());
+
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_header("content-type")
+        .allow_methods(&[Method::PUT, Method::DELETE]);
 
     let get_questions = warp::get()
         .and(warp::path("questions"))
@@ -204,14 +212,14 @@ async fn main() {
         .and(warp::body::json())
         .and_then(add_question);
     
-    let add_comment = warp::post()
+    let add_answer = warp::post()
         .and(warp::path("comments"))
         .and(warp::path::end())
         .and(store_filter.clone())
         .and(warp::body::form())
-        .and_then(add_comment);
+        .and_then(add_answer);
 
-    let routes = get_questions.or(update_question).or(add_question).or(add_comment).or(delete_question).recover(return_error);
+    let routes = get_questions.or(update_question).or(add_question).or(add_answer).or(delete_question).with(cors).recover(return_error);
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
