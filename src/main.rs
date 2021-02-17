@@ -1,18 +1,15 @@
-use warp::{
-    Filter, 
-    http::Method,
-};
+#![warn(clippy::all)]
+
+use warp::{http::Method, Filter};
 
 mod error;
+mod routes;
 mod store;
 mod types;
-mod routes;
-
-use store::Store;
 
 #[tokio::main]
 async fn main() {
-    let store = Store::new();
+    let store = store::Store::new();
     let store_filter = warp::any().map(move || store.clone());
 
     let cors = warp::cors()
@@ -48,7 +45,7 @@ async fn main() {
         .and(store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::question::add_question);
-    
+
     let add_answer = warp::post()
         .and(warp::path("comments"))
         .and(warp::path::end())
@@ -56,9 +53,13 @@ async fn main() {
         .and(warp::body::form())
         .and_then(routes::answer::add_answer);
 
-    let routes = get_questions.or(update_question).or(add_question).or(add_answer).or(delete_question).with(cors).recover(error::return_error);
+    let routes = get_questions
+        .or(update_question)
+        .or(add_question)
+        .or(add_answer)
+        .or(delete_question)
+        .with(cors)
+        .recover(error::return_error);
 
-    warp::serve(routes)
-        .run(([127, 0, 0, 1], 3030))
-        .await;
+    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
