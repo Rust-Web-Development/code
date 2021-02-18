@@ -1,0 +1,11 @@
+[package]
+name = "minimal-hyper-http"
+version = "0.1.0"
+authors = ["Bastian Gruber <foreach@me.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.2", features = ["full"] }
+hyper = { version = "0.14", features = ["full"] }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use warp::http::StatusCode;
 
-use crate::error::Error;
+use handle_errors::Error;
 use crate::store::Store;
 use crate::types::pagination::extract_pagination;
 use crate::types::question::{Question, QuestionId};
