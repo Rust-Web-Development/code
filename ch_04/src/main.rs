@@ -41,6 +41,20 @@ pub struct Store {
     pub answers: Arc<RwLock<HashMap<String, Answer>>>,
 }
 
+impl Store {
+    pub fn new() -> Self {
+        Store {
+            questions: Arc::new(RwLock::new(Self::init())),
+            answers: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+
+    fn init() -> HashMap<QuestionId, Question> {
+        let file = include_str!("../questions.json");
+        serde_json::from_str(file).expect("can't read questions.json")
+    }
+}
+
 #[derive(Debug)]
 pub enum Error {
     ParseError(std::num::ParseIntError),
@@ -105,36 +119,6 @@ pub fn extract_pagination(params: HashMap<String, String>) -> Result<Pagination,
     Err(Error::MissingParameters)
 }
 
-
-impl Store {
-    pub fn new() -> Self {
-        Store {
-            questions: Arc::new(RwLock::new(Self::init())),
-            answers: Arc::new(RwLock::new(HashMap::new())),
-        }
-    }
-
-    fn init() -> HashMap<QuestionId, Question> {
-        let file = include_str!("../questions.json");
-        serde_json::from_str(file).expect("can't read questions.json")
-    }
-}
-
-pub async fn add_answer(
-    store: Store,
-    params: HashMap<String, String>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let answer = Answer {
-        id: "CI001".to_string(),
-        content: params.get("content").unwrap().to_string(),
-        question_id: params.get("questionId").unwrap().to_string(),
-    };
-
-    store.answers.write().insert(answer.clone().id, answer);
-
-    Ok(warp::reply::with_status("Answer added", StatusCode::OK))
-}
-
 pub async fn get_questions(
     params: HashMap<String, String>,
     store: Store,
@@ -148,6 +132,18 @@ pub async fn get_questions(
         let res: Vec<Question> = store.questions.read().values().cloned().collect();
         Ok(warp::reply::json(&res))
     }
+}
+
+pub async fn add_question(
+    store: Store,
+    question: Question,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    store
+        .questions
+        .write()
+        .insert(question.clone().id, question);
+
+    Ok(warp::reply::with_status("Question added", StatusCode::OK))
 }
 
 pub async fn update_question(
@@ -168,25 +164,25 @@ pub async fn delete_question(
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match store.questions.write().remove(&QuestionId(id)) {
-        Some(_) => (),
+        Some(_) => return Ok(warp::reply::with_status("Question deleted", StatusCode::OK)),
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
-
-    Ok(warp::reply::with_status("Question deleted", StatusCode::OK))
 }
 
-pub async fn add_question(
+pub async fn add_answer(
     store: Store,
-    question: Question,
+    params: HashMap<String, String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    store
-        .questions
-        .write()
-        .insert(question.clone().id, question);
+    let answer = Answer {
+        id: "CI001".to_string(),
+        content: params.get("content").unwrap().to_string(),
+        question_id: params.get("questionId").unwrap().to_string(),
+    };
 
-    Ok(warp::reply::with_status("Question added", StatusCode::OK))
+    store.answers.write().insert(answer.clone().id, answer);
+
+    Ok(warp::reply::with_status("Answer added", StatusCode::OK))
 }
-
 
 #[tokio::main]
 async fn main() {
