@@ -3,7 +3,6 @@
 use warp::{http::Method, Filter};
 use handle_errors::return_error;
 
-// mod error;
 mod routes;
 mod store;
 mod types;
