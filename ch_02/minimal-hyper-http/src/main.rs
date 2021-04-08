@@ -38,7 +38,7 @@ async fn match_requests(
 	}
 }
 
-async fn get_handler(req: &Request<Body>) -> Result<Response<Body>, Error> {  
+async fn get_handler(_req: &Request<Body>) -> Result<Response<Body>, Error> {  
 	//println!("{:?}", req.uri().query());  
 	Ok(Response::builder()
 		.header(header::CONTENT_TYPE, "application/json")
