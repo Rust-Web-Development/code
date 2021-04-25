@@ -2,7 +2,7 @@ use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    let hello = warp::get()
+    let hello = warp::path("hello")
         .map(|| format!("Hello, World!"));
 
     warp::serve(hello)
