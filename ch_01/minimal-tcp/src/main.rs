@@ -1,6 +1,4 @@
-use std::io::prelude::*;
-use std::net::TcpListener;
-use std::net::TcpStream;
+use std::{io::prelude::*, net::{TcpStream, TcpListener}};
 
 fn main() {
 	let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
