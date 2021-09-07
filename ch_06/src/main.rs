@@ -10,10 +10,13 @@ mod types;
 #[tokio::main]
 async fn main() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+  
+    let id = uuid::Uuid::new_v4();
 
-    let log = warp::log::custom(|info| {
+    let log = warp::log::custom(move |info| {
         log::info!(
-            "{} {} {} {:?} from {:?} with {:?}",
+            "Request Id: {} {} {} {} {:?} from {:?} with {:?}",
+            id,
             info.method(),
             info.path(),
             info.status(),
@@ -26,6 +29,8 @@ async fn main() {
     let store = store::Store::new();
     let store_filter = warp::any().map(move || store.clone());
 
+    let id_filter = warp::any().map(move || id.to_string());
+
     let cors = warp::cors()
         .allow_any_origin()
         .allow_header("content-type")
@@ -36,6 +41,7 @@ async fn main() {
         .and(warp::path::end())
         .and(warp::query())
         .and(store_filter.clone())
+        .and(id_filter)
         .and_then(routes::question::get_questions);
 
     let update_question = warp::put()
