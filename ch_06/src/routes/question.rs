@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use warp::http::StatusCode;
-use log::error;
 
 use handle_errors::Error;
 use crate::store::Store;
@@ -11,13 +10,15 @@ pub async fn get_questions(
     params: HashMap<String, String>,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    error!("this is printed by default");
+    log::info!("Start querying questions");
     if !params.is_empty() {
         let pagination = extract_pagination(params)?;
+        log::info!("Pagination set {:?}", &pagination);
         let res: Vec<Question> = store.questions.read().values().cloned().collect();
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
+        log::info!("No pagination used");
         let res: Vec<Question> = store.questions.read().values().cloned().collect();
         Ok(warp::reply::json(&res))
     }

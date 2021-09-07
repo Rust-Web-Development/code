@@ -13,3 +13,4 @@ tokio = { version = "1.1.1", features = ["full"] }
 handle-errors = { path = "handle-errors", version = "0.1.0" }
 log = "0.4"
 env_logger = "0.8"
+log4rs = "1.0"
