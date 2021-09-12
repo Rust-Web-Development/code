@@ -15,3 +15,5 @@ log = "0.4"
 env_logger = "0.8"
 log4rs = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = "0.2"
