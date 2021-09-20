@@ -10,19 +10,14 @@ mod types;
 
 #[tokio::main]
 async fn main() {
-    let id = uuid::Uuid::new_v4();
-
-    let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "practical_rust_book=info,warp=error".to_owned());
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "practical_rust_book=info,warp=error".to_owned());
 
     let store = store::Store::new();
     let store_filter = warp::any().map(move || store.clone());
 
-    let id_filter = warp::any().map(move || id.to_string());
-
     tracing_subscriber::fmt()
-        .json()
         // Use the filter we built above to determine which traces to record.
-        .with_env_filter(filter)
+        .with_env_filter(log_filter)
         // Record an event when each span closes. This can be used to time our
         // routes' durations!
         .with_span_events(FmtSpan::CLOSE)
@@ -38,8 +33,15 @@ async fn main() {
         .and(warp::path::end())
         .and(warp::query())
         .and(store_filter.clone())
-        .and(id_filter)
-        .and_then(routes::question::get_questions);
+        .and_then(routes::question::get_questions)
+        .with(warp::trace(|info| {
+            tracing::info_span!(
+                "get_questions request",
+                method = %info.method(),
+                path = %info.path(),
+                id = %uuid::Uuid::new_v4(),
+            )})
+        );
 
     let update_question = warp::put()
         .and(warp::path("questions"))
