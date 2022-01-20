@@ -1,0 +1,20 @@
+[package]
+name = "practical-rust-book"
+version = "0.1.0"
+authors = ["Bastian Gruber <foreach@me.com>"]
+edition = "2018"
+
+[dependencies]
+warp = "0.3"
+parking_lot = "0.10.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.1.1", features = ["full"] }
+handle-errors = { path = "handle-errors", version = "0.1.0" }
+log = "0.4"
+env_logger = "0.8"
+log4rs = "1.0"
+uuid = { version = "0.8", features = ["v4"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = "0.2"
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate" ] }
