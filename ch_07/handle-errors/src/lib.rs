@@ -10,6 +10,7 @@ pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
     QuestionNotFound,
+    DatabaseQueryError,
 }
 
 impl std::fmt::Display for Error {
@@ -18,6 +19,7 @@ impl std::fmt::Display for Error {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
             Error::QuestionNotFound => write!(f, "Question not found"),
+            Error::DatabaseQueryError => write!(f, "Query could not be executed"),
         }
     }
 }
