@@ -33,30 +33,31 @@ pub async fn get_questions(
     }
 }
 
-// pub async fn update_question(
-//     id: String,
-//     store: Store,
-//     question: Question,
-// ) -> Result<impl warp::Reply, warp::Rejection> {
-//     match store.questions.write().get_mut(&QuestionId(id)) {
-//         Some(q) => *q = question,
-//         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
-//     }
+pub async fn update_question(
+    id: i32,
+    store: Store,
+    question: Question,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let res: Question = match store.update_question(question, id).await {
+        Ok(res) => res,
+        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError)),
+    };
 
-//     Ok(warp::reply::with_status("Question updated", StatusCode::OK))
-// }
+    Ok(warp::reply::with_status("Question updated", StatusCode::OK))
+}
 
-// pub async fn delete_question(
-//     id: String,
-//     store: Store,
-// ) -> Result<impl warp::Reply, warp::Rejection> {
-//     match store.questions.write().remove(&QuestionId(id)) {
-//         Some(_) => (),
-//         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
-//     }
 
-//     Ok(warp::reply::with_status("Question deleted", StatusCode::OK))
-// }
+pub async fn delete_question(
+    id: i32,
+    store: Store,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let res: bool = match store.delete_question(id).await {
+        Ok(res) => res,
+        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError)),
+    };
+
+    Ok(warp::reply::with_status(format!("Question {} deleted", id), StatusCode::OK))
+}
 
 pub async fn add_question(
     store: Store,

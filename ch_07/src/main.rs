@@ -43,20 +43,20 @@ async fn main() -> Result<(), sqlx::Error>{
             )})
         );
 
-    // let update_question = warp::put()
-    //     .and(warp::path("questions"))
-    //     .and(warp::path::param::<String>())
-    //     .and(warp::path::end())
-    //     .and(store_filter.clone())
-    //     .and(warp::body::json())
-    //     .and_then(routes::question::update_question);
+    let update_question = warp::put()
+        .and(warp::path("questions"))
+        .and(warp::path::param::<i32>())
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::question::update_question);
 
-    // let delete_question = warp::delete()
-    //     .and(warp::path("questions"))
-    //     .and(warp::path::param::<String>())
-    //     .and(warp::path::end())
-    //     .and(store_filter.clone())
-    //     .and_then(routes::question::delete_question);
+    let delete_question = warp::delete()
+        .and(warp::path("questions"))
+        .and(warp::path::param::<i32>())
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and_then(routes::question::delete_question);
 
     let add_question = warp::post()
         .and(warp::path("questions"))
@@ -73,10 +73,10 @@ async fn main() -> Result<(), sqlx::Error>{
     //     .and_then(routes::answer::add_answer);
 
     let routes = get_questions
-        // .or(update_question)
+        .or(update_question)
         .or(add_question)
+        .or(delete_question)
         // .or(add_answer)
-        // .or(delete_question)
         .with(cors)
         .with(warp::trace::request())
         .recover(return_error);
