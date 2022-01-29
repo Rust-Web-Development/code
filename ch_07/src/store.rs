@@ -28,8 +28,10 @@ impl Store {
         }
     }
 
-    pub async fn get_questions(self) -> Result<Vec<Question>, sqlx::Error> {
-        match sqlx::query("SELECT * from questions")
+    pub async fn get_questions(self, limit: Option<i32>, offset: i32) -> Result<Vec<Question>, sqlx::Error> {
+        match sqlx::query("SELECT * from questions LIMIT $1 OFFSET $2")
+            .bind(limit)
+            .bind(offset)
             .map(|row: PgRow| Question {
 			    id: QuestionId(row.get("id")),
                 title: row.get("title"),
