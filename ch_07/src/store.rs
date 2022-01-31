@@ -60,7 +60,7 @@ impl Store {
             .await {
                 Ok(question) => Ok(question),
                 Err(e) => {
-                    tracing::event!(tracing::Level::INFO, "{:?}", e);
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
                     Err(e)
                 },
             }
@@ -84,7 +84,7 @@ impl Store {
             .await {
                 Ok(question) => Ok(question),
                 Err(e) => {
-                    tracing::event!(tracing::Level::INFO, "{:?}", e);
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
                     Err(e)
                 },
             }
@@ -102,9 +102,4 @@ impl Store {
                 },
             }
     }
-
-    // fn init() -> HashMap<QuestionId, Question> {
-    //     let file = include_str!("../questions.json");
-    //     serde_json::from_str(file).expect("can't read questions.json")
-    // }
 }

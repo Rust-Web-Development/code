@@ -21,12 +21,10 @@ pub async fn get_questions(
         pagination = extract_pagination(params)?;
     }
 
-    let res: Vec<Question> = match store.get_questions(pagination.limit, pagination.offset).await {
-        Ok(res) => res,
-        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError(e))),
-    };
-
-    Ok(warp::reply::json(&res))
+    match store.get_questions(pagination.limit, pagination.offset).await {
+        Ok(res) => Ok(warp::reply::json(&res)),
+        Err(e) => Err(warp::reject::custom(Error::DatabaseQueryError(e))),
+    }
 }
 
 pub async fn update_question(
@@ -34,12 +32,10 @@ pub async fn update_question(
     store: Store,
     question: Question,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let res: Question = match store.update_question(question, id).await {
-        Ok(res) => res,
-        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError(e))),
-    };
-
-    Ok(warp::reply::with_status("Question updated", StatusCode::OK))
+    match store.update_question(question, id).await {
+        Ok(res) => Ok(warp::reply::json(&res)),
+        Err(e) => Err(warp::reject::custom(Error::DatabaseQueryError(e))),
+    }
 }
 
 
@@ -47,10 +43,9 @@ pub async fn delete_question(
     id: i32,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let res: bool = match store.delete_question(id).await {
-        Ok(res) => res,
-        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError(e))),
-    };
+    if let Err(e) = store.delete_question(id).await {
+        return Err(warp::reject::custom(Error::DatabaseQueryError(e)));
+    }
 
     Ok(warp::reply::with_status(format!("Question {} deleted", id), StatusCode::OK))
 }
@@ -59,10 +54,9 @@ pub async fn add_question(
     store: Store,
     new_question: NewQuestion,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let res: Question = match store.add_question(new_question).await {
-        Ok(res) => res,
-        Err(e) => return Err(warp::reject::custom(Error::DatabaseQueryError(e))),
-    };
+    if let Err(e) = store.add_question(new_question).await {
+        return Err(warp::reject::custom(Error::DatabaseQueryError(e)));
+    }
 
     Ok(warp::reply::with_status("Question added", StatusCode::OK))
 }
