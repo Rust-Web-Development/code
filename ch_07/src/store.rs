@@ -1,11 +1,8 @@
-// use parking_lot::RwLock;
-// use std::collections::HashMap;
-// use std::sync::Arc;
 use sqlx::postgres::{PgPoolOptions, PgPool, PgRow};
 use sqlx::Row;
 
 use crate::types::{
-    // answer::Answer,
+    answer::Answer,
     question::{Question, QuestionId, NewQuestion},
 };
 
@@ -20,7 +17,7 @@ impl Store {
         .max_connections(5)
         .connect(db_url).await {
             Ok(pool) => pool,
-            Err(e) => panic!("Couldn't establish DB connection!"),
+            Err(e) => panic!("Couldn't establish DB connection: {}", e),
         };
     
         Store {
@@ -41,7 +38,10 @@ impl Store {
             .fetch_all(&self.connection)
             .await {
                 Ok(questions) => Ok(questions),
-                Err(e) => Err(e),
+                Err(e) => {
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                    Err(e)
+                }
             }
     }
 
@@ -97,7 +97,21 @@ impl Store {
             .await {
                 Ok(_) => Ok(true),
                 Err(e) => {
-                    tracing::event!(tracing::Level::INFO, "XXXX {:?}", e);
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                    Err(e)
+                },
+            }
+    }
+
+    pub async fn add_answer(self, answer: Answer) -> Result<bool, sqlx::Error> {
+        match sqlx::query("INSERT INTO answers (content, corresponding_question) VALUES ($1, $2)")
+            .bind(answer.content)
+            .bind(answer.question_id)
+            .execute(&self.connection)
+            .await {
+                Ok(_) => Ok(true),
+                Err(e) => {
+                    // tracing::event!(tracing::Level::ERROR, "{:?}", e);
                     Err(e)
                 },
             }

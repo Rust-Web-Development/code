@@ -4,22 +4,12 @@ use handle_errors::Error;
 
 /// Pagination struct which is getting extract
 /// from query params
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Pagination {
     /// The index of the last item which has to be returned
     pub limit: Option<i32>,
     /// The index of the first item which has to be returned
     pub offset: i32,
-}
-
-
-impl Default for Pagination {
-    fn default() -> Self { 
-        Pagination {
-            limit: None,
-            offset: 0,
-        }
-     }
 }
 
 /// Extract query parameters from the `/questions` route

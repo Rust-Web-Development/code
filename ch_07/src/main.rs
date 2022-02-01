@@ -10,7 +10,7 @@ mod store;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error>{
-    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "practical_rust_book=info,warp=error".to_owned());
+    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "handle_errors=warn,practical_rust_book=warn,warp=warn".to_owned());
 
     let store = store::Store::new("postgres://localhost:5432/rustwebdev").await;
     let store_filter = warp::any().map(move || store.clone());
@@ -33,15 +33,7 @@ async fn main() -> Result<(), sqlx::Error>{
         .and(warp::path::end())
         .and(warp::query())
         .and(store_filter.clone())
-        .and_then(routes::question::get_questions)
-        .with(warp::trace(|info| {
-            tracing::info_span!(
-                "XX1",
-                method = %info.method(),
-                path = %info.path(),
-                id = %uuid::Uuid::new_v4(),
-            )})
-        );
+        .and_then(routes::question::get_questions);
 
     let update_question = warp::put()
         .and(warp::path("questions"))
@@ -65,18 +57,18 @@ async fn main() -> Result<(), sqlx::Error>{
         .and(warp::body::json())
         .and_then(routes::question::add_question);
 
-    // let add_answer = warp::post()
-    //     .and(warp::path("comments"))
-    //     .and(warp::path::end())
-    //     .and(store_filter.clone())
-    //     .and(warp::body::form())
-    //     .and_then(routes::answer::add_answer);
+    let add_answer = warp::post()
+        .and(warp::path("answers"))
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and(warp::body::form())
+        .and_then(routes::answer::add_answer);
 
     let routes = get_questions
         .or(update_question)
         .or(add_question)
         .or(delete_question)
-        // .or(add_answer)
+        .or(add_answer)
         .with(cors)
         .with(warp::trace::request())
         .recover(return_error);
