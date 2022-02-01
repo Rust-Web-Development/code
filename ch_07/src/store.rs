@@ -110,9 +110,14 @@ impl Store {
             .execute(&self.connection)
             .await {
                 Ok(_) => Ok(true),
-                Err(e) => {
-                    // tracing::event!(tracing::Level::ERROR, "{:?}", e);
-                    Err(e)
+                Err(error) => {
+                    tracing::event!(
+                        tracing::Level::ERROR, 
+                        code = error.as_database_error().unwrap().code().unwrap().parse::<i32>().unwrap(),
+                        db_message = error.as_database_error().unwrap().message(),
+                        constraint = error.as_database_error().unwrap().constraint().unwrap()
+                    );
+                    Err(error)
                 },
             }
     }

@@ -4,15 +4,13 @@ use warp::{
     reject::Reject,
     Rejection, Reply,
 };
-use sqlx::error::Error as SqlxError;
 use tracing::{event, Level, instrument};
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(std::num::ParseIntError),
     MissingParameters,
-    QuestionNotFound,
-    DatabaseQueryError(SqlxError),
+    DatabaseQueryError,
 }
 
 impl std::fmt::Display for Error {
@@ -20,8 +18,7 @@ impl std::fmt::Display for Error {
         match &*self {
             Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
-            Error::QuestionNotFound => write!(f, "Question not found"),
-            Error::DatabaseQueryError(_) => write!(f, "Cannot update, invalid data."),
+            Error::DatabaseQueryError => write!(f, "Cannot update, invalid data."),
         }
     }
 }
@@ -30,15 +27,10 @@ impl Reject for Error {}
 
 #[instrument]
 pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
-    if let Some(crate::Error::DatabaseQueryError(error)) = r.find() {
-        event!(
-            Level::ERROR, 
-            code = error.as_database_error().unwrap().code().unwrap().parse::<i32>().unwrap(),
-            db_message = error.as_database_error().unwrap().message(),
-            constraint = error.as_database_error().unwrap().constraint().unwrap()
-        );
+    if let Some(crate::Error::DatabaseQueryError) = r.find() {
+        event!(Level::ERROR, "Database query error");
         Ok(warp::reply::with_status(
-            "Invalid entity".to_string(),
+            crate::Error::DatabaseQueryError.to_string(),
             StatusCode::UNPROCESSABLE_ENTITY,
         ))
     } else if let Some(error) = r.find::<CorsForbidden>() {
