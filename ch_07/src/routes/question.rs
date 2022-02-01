@@ -43,20 +43,18 @@ pub async fn delete_question(
     id: i32,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if let Err(_) = store.delete_question(id).await {
-        return Err(warp::reject::custom(Error::DatabaseQueryError));
+    match store.delete_question(id).await {
+        Ok(_) => Ok(warp::reply::with_status(format!("Question {} deleted", id), StatusCode::OK)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
     }
-
-    Ok(warp::reply::with_status(format!("Question {} deleted", id), StatusCode::OK))
 }
 
 pub async fn add_question(
     store: Store,
     new_question: NewQuestion,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    if let Err(_) = store.add_question(new_question).await {
-        return Err(warp::reject::custom(Error::DatabaseQueryError));
+    match store.add_question(new_question).await {
+        Ok(_) => Ok(warp::reply::with_status("Question added", StatusCode::OK)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
     }
-
-    Ok(warp::reply::with_status("Question added", StatusCode::OK))
 }
