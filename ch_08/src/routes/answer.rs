@@ -3,13 +3,19 @@ use warp::http::StatusCode;
 
 use crate::store::Store;
 use crate::types::answer::Answer;
+use crate::profanity::check_profanity;
 
 pub async fn add_answer(
     store: Store,
     params: HashMap<String, String>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let content = match check_profanity(params.get("content").unwrap().to_string()).await {
+        Ok(res) => res,
+        Err(e) => return Err(warp::reject::custom(e)),
+    };
+
     let answer = Answer {
-        content: params.get("content").unwrap().to_string(),
+        content,
         question_id: params.get("questionId").unwrap().parse().unwrap(),
     };
 

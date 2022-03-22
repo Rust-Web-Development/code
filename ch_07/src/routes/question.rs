@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use warp::http::StatusCode;
 use tracing::{instrument, event, Level};
 
-use handle_errors::Error;
 use crate::store::Store;
 use crate::types::pagination::{Pagination, extract_pagination};
 use crate::types::question::{Question, NewQuestion};
@@ -23,7 +22,7 @@ pub async fn get_questions(
 
     match store.get_questions(pagination.limit, pagination.offset).await {
         Ok(res) => Ok(warp::reply::json(&res)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
+        Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
@@ -34,7 +33,7 @@ pub async fn update_question(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match store.update_question(question, id).await {
         Ok(res) => Ok(warp::reply::json(&res)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
+        Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
@@ -45,7 +44,7 @@ pub async fn delete_question(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match store.delete_question(id).await {
         Ok(_) => Ok(warp::reply::with_status(format!("Question {} deleted", id), StatusCode::OK)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
+        Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
@@ -55,6 +54,6 @@ pub async fn add_question(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     match store.add_question(new_question).await {
         Ok(_) => Ok(warp::reply::with_status("Question added", StatusCode::OK)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseQueryError)),
+        Err(e) => Err(warp::reject::custom(e)),
     }
 }

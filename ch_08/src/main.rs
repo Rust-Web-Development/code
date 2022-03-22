@@ -1,18 +1,20 @@
 #![warn(clippy::all)]
 
-use warp::{http::Method, Filter};
 use handle_errors::return_error;
 use tracing_subscriber::fmt::format::FmtSpan;
+use warp::{http::Method, Filter};
 
 mod routes;
-mod types;
 mod store;
+mod profanity;
+mod types;
 
 #[tokio::main]
-async fn main() -> Result<(), sqlx::Error>{
-    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "handle_errors=warn,practical_rust_book=warn,warp=warn".to_owned());
+async fn main() -> Result<(), sqlx::Error> {
+    let log_filter = std::env::var("RUST_LOG")
+        .unwrap_or_else(|_| "handle_errors=warn,practical_rust_book=warn,warp=warn".to_owned());
 
-    let store = store::Store::new("postgres://localhost:5432/rustwebdev").await;
+    let store = store::Store::new("postgres://localhost:5432/rustwebdev").await?;
 
     sqlx::migrate!().run(&store.clone().connection).await?;
 
