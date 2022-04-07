@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use tracing::{event, instrument, Level};
 use warp::http::StatusCode;
 
-use crate::store::Store;
 use crate::profanity::check_profanity;
+use crate::store::Store;
 use crate::types::pagination::{extract_pagination, Pagination};
 use crate::types::question::{NewQuestion, Question};
+use crate::types::account::Session;
 
 #[instrument]
 pub async fn get_questions(
@@ -52,7 +53,9 @@ pub async fn update_question(
             Err(e) => Err(warp::reject::custom(e)),
         }
     } else {
-        Err(warp::reject::custom(title.expect_err("Expected API call to have failed here")))
+        Err(warp::reject::custom(
+            title.expect_err("Expected API call to have failed here"),
+        ))
     }
 }
 
@@ -67,9 +70,11 @@ pub async fn delete_question(id: i32, store: Store) -> Result<impl warp::Reply, 
 }
 
 pub async fn add_question(
+    session: Session,
     store: Store,
     new_question: NewQuestion,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    println!("{:?}", session);
     let title = match check_profanity(new_question.title).await {
         Ok(res) => res,
         Err(e) => return Err(warp::reject::custom(e)),

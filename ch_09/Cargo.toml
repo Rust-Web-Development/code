@@ -14,10 +14,13 @@ handle-errors = { path = "handle-errors", version = "0.1.0" }
 log = "0.4"
 env_logger = "0.8"
 log4rs = "1.0"
-uuid = { version = "0.8", features = ["v4"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = "0.2"
-sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate", "postgres", "uuid" ] }
 reqwest = { version = "0.11", features = ["json"] }
 reqwest-middleware = "0.1.1"
 reqwest-retry = "0.1.1"
+rand = "0.8"
+rust-argon2 = "1.0"
+paseto = "2.0"

@@ -4,9 +4,9 @@ use handle_errors::return_error;
 use tracing_subscriber::fmt::format::FmtSpan;
 use warp::{http::Method, Filter};
 
+mod profanity;
 mod routes;
 mod store;
-mod profanity;
 mod types;
 
 #[tokio::main]
@@ -15,6 +15,19 @@ async fn main() -> Result<(), sqlx::Error> {
         .unwrap_or_else(|_| "handle_errors=warn,practical_rust_book=warn,warp=warn".to_owned());
 
     let store = store::Store::new("postgres://localhost:5432/rustwebdev").await?;
+
+    // let check_auth = warp::any().and(warp::header::<String>("Authorization").map(
+    //     |token: String| -> Result<types::account::Session, warp::reject::Reject> {
+    //         let token = match routes::authentication::decrypt_token(token) {
+    //             Ok(t) => t,
+    //             Err(e) => return warp::reject::custom(e)
+    //         };
+
+    //         Ok(types::account::Session {
+    //             account_id: types::account::AccountId(serde_json::from_str(&token).expect("Cannot")),
+    //         })
+    //     },
+    // ));
 
     sqlx::migrate!().run(&store.clone().connection).await?;
 
@@ -58,6 +71,7 @@ async fn main() -> Result<(), sqlx::Error> {
     let add_question = warp::post()
         .and(warp::path("questions"))
         .and(warp::path::end())
+        .and(routes::authentication::auth())
         .and(store_filter.clone())
         .and(warp::body::json())
         .and_then(routes::question::add_question);
@@ -69,11 +83,27 @@ async fn main() -> Result<(), sqlx::Error> {
         .and(warp::body::form())
         .and_then(routes::answer::add_answer);
 
+    let registration = warp::post()
+        .and(warp::path("registration"))
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::authentication::register);
+
+    let login = warp::post()
+        .and(warp::path("login"))
+        .and(warp::path::end())
+        .and(store_filter.clone())
+        .and(warp::body::json())
+        .and_then(routes::authentication::login);
+
     let routes = get_questions
         .or(update_question)
         .or(add_question)
         .or(delete_question)
         .or(add_answer)
+        .or(registration)
+        .or(login)
         .with(cors)
         .with(warp::trace::request())
         .recover(return_error);

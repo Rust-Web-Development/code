@@ -11,3 +11,5 @@ warp = "0.3"
 tracing = { version = "0.1", features = ["log"] }
 reqwest = "0.11"
 reqwest-middleware = "0.1.1"
+sqlx = { version = "0.5", features = [ "postgres" ] }
+rust-argon2 = "1.0"

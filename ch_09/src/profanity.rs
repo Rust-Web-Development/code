@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use reqwest_middleware::ClientBuilder;
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct APIResponse(String);
@@ -37,30 +37,26 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
         .body(content)
         .send()
         .await
-        .map_err(|e| handle_errors::Error::MiddlewareReqwestAPIError(e))?;
-    
+        .map_err(handle_errors::Error::MiddlewareReqwestAPIError)?;
+
     if !res.status().is_success() {
         let status = res.status().as_u16();
         let message = res.json::<APIResponse>().await.unwrap();
-    
+
         let err = handle_errors::APILayerError {
             status,
             message: message.0,
         };
-    
+
         if status < 500 {
             return Err(handle_errors::Error::ClientError(err));
         } else {
             return Err(handle_errors::Error::ServerError(err));
-        } 
+        }
     }
-    
-    match res.json::<BadWordsResponse>()
-        .await {
-            Ok(res) => Ok(res.censored_content),
-            Err(e) => Err(handle_errors::Error::ReqwestAPIError(e)),
-        }  
-} 
 
-
-
+    match res.json::<BadWordsResponse>().await {
+        Ok(res) => Ok(res.censored_content),
+        Err(e) => Err(handle_errors::Error::ReqwestAPIError(e)),
+    }
+}
