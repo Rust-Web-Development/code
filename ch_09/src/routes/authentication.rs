@@ -1,11 +1,11 @@
 use argon2::{self, Config};
 use paseto::v2::local::{decrypt_paseto, local_paseto};
 use rand::Rng;
-use warp::{http::StatusCode, Filter};
 use std::future;
+use warp::{http::StatusCode, Filter};
 
 use crate::store::Store;
-use crate::types::account::{Session, Account, AccountId};
+use crate::types::account::{Account, AccountId, Session};
 
 pub async fn register(store: Store, account: Account) -> Result<impl warp::Reply, warp::Rejection> {
     let hashed_password = hash_password(account.password.as_bytes());
@@ -23,7 +23,7 @@ pub async fn register(store: Store, account: Account) -> Result<impl warp::Reply
 }
 
 pub async fn login(store: Store, login: Account) -> Result<impl warp::Reply, warp::Rejection> {
-    match store.get_user(login.email).await {
+    match store.get_account(login.email).await {
         Ok(account) => match verify_password(&account.password, login.password.as_bytes()) {
             Ok(verified) => {
                 if verified {
@@ -63,17 +63,15 @@ fn issue_token(account_id: AccountId) -> String {
         .expect("Failed to create token")
 }
 
-
 pub fn auth() -> impl Filter<Extract = (Session,), Error = warp::Rejection> + Clone {
-    warp::header::<String>("Authorization")
-        .and_then(| token: String| {
-            let token = match decrypt_token(token) {
-                Ok(t) => t,
-                Err(_) => return future::ready(Err(warp::reject::reject())),
-            };
+    warp::header::<String>("Authorization").and_then(|token: String| {
+        let token = match decrypt_token(token) {
+            Ok(t) => t,
+            Err(_) => return future::ready(Err(warp::reject::reject())),
+        };
 
-            future::ready(Ok(Session {
-                account_id: AccountId(serde_json::from_str(&token).expect("Cannot"))
-            }))
-        })
+        future::ready(Ok(Session {
+            account_id: AccountId(serde_json::from_str(&token).expect("Cannot")),
+        }))
+    })
 }
