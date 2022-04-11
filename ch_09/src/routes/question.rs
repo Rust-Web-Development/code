@@ -38,7 +38,7 @@ pub async fn update_question(
     question: Question,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let account_id = session.account_id;
-    if store.get_question(id, &account_id).await?.is_some() {
+    if store.is_question_owner(id, &account_id).await? {
         let title = check_profanity(question.title);
         let content = check_profanity(question.content);
 
@@ -71,7 +71,7 @@ pub async fn delete_question(
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     let account_id = session.account_id;
-    if store.get_question(id, &account_id).await?.is_some() {
+    if store.is_question_owner(id, &account_id).await? {
         match store.delete_question(id, account_id).await {
             Ok(_) => Ok(warp::reply::with_status(
                 format!("Question {} deleted", id),

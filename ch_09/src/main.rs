@@ -16,19 +16,6 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let store = store::Store::new("postgres://localhost:5432/rustwebdev").await?;
 
-    // let check_auth = warp::any().and(warp::header::<String>("Authorization").map(
-    //     |token: String| -> Result<types::account::Session, warp::reject::Reject> {
-    //         let token = match routes::authentication::decrypt_token(token) {
-    //             Ok(t) => t,
-    //             Err(e) => return warp::reject::custom(e)
-    //         };
-
-    //         Ok(types::account::Session {
-    //             account_id: types::account::AccountId(serde_json::from_str(&token).expect("Cannot")),
-    //         })
-    //     },
-    // ));
-
     sqlx::migrate!().run(&store.clone().connection).await?;
 
     let store_filter = warp::any().map(move || store.clone());
