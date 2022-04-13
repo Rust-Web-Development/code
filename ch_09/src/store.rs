@@ -92,7 +92,6 @@ impl Store {
     }
 
     pub async fn update_question(self, question: Question, id: i32, account_id: AccountId) -> Result<Question, Error> {
-        println!("{}", account_id.0);
         match sqlx::query(
             "UPDATE questions SET title = $1, content = $2, tags = $3
         WHERE id = $4 AND account_id = $5
