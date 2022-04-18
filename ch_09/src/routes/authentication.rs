@@ -1,8 +1,8 @@
 use argon2::{self, Config};
-use paseto::v2::local::{decrypt_paseto, local_paseto};
 use rand::Rng;
 use std::future;
 use warp::{http::StatusCode, Filter};
+use chrono::prelude::*;
 
 use crate::store::Store;
 use crate::types::account::{Account, AccountId, Session};
@@ -42,9 +42,16 @@ pub async fn login(store: Store, login: Account) -> Result<impl warp::Reply, war
     }
 }
 
-pub fn decrypt_token(token: String) -> Result<String, handle_errors::Error> {
-    decrypt_paseto(&token, None, "RANDOM WORDS WINTER MACINTOSH PC".as_bytes())
-        .map_err(|_| handle_errors::Error::CannotDecryptToken)
+pub fn verify_token(token: String) -> Result<Session, handle_errors::Error> {
+    let token = paseto::tokens::validate_local_token(
+		&token,
+        None,
+		&"RANDOM WORDS WINTER MACINTOSH PC".as_bytes(),
+		&paseto::tokens::TimeBackend::Chrono,
+	)
+    .map_err(|_| handle_errors::Error::CannotDecryptToken)?;
+
+    serde_json::from_value::<Session>(token).map_err(|_| handle_errors::Error::CannotDecryptToken)
 }
 
 fn hash_password(password: &[u8]) -> String {
@@ -58,21 +65,25 @@ fn verify_password(hash: &str, password: &[u8]) -> Result<bool, argon2::Error> {
 }
 
 fn issue_token(account_id: AccountId) -> String {
-    let state = serde_json::to_string(&account_id).expect("Failed to serialize state");
-    
-    local_paseto(&state, None, "RANDOM WORDS WINTER MACINTOSH PC".as_bytes())
-        .expect("Failed to create token")
+    let current_date_time = Utc::now();
+	let dt = current_date_time + chrono::Duration::days(1);
+
+    paseto::tokens::PasetoBuilder::new()
+        .set_encryption_key(&Vec::from("RANDOM WORDS WINTER MACINTOSH PC".as_bytes()))
+        .set_expiration(&dt)
+        .set_not_before(&Utc::now())
+        .set_claim("account_id", serde_json::json!(account_id))
+        .build()
+        .expect("Failed to construct paseto token w/ builder!")
 }
 
 pub fn auth() -> impl Filter<Extract = (Session,), Error = warp::Rejection> + Clone {
     warp::header::<String>("Authorization").and_then(|token: String| {
-        let token = match decrypt_token(token) {
+        let token = match verify_token(token) {
             Ok(t) => t,
             Err(_) => return future::ready(Err(warp::reject::reject())),
         };
 
-        future::ready(Ok(Session {
-            account_id: AccountId(serde_json::from_str(&token).expect("Cannot")),
-        }))
+        future::ready(Ok(token))
     })
 }
