@@ -1,4 +1,7 @@
-use sqlx::{Row, postgres::{PgPool, PgPoolOptions, PgRow}};
+use sqlx::{
+    postgres::{PgPool, PgPoolOptions, PgRow},
+    Row,
+};
 
 use handle_errors::Error;
 
@@ -69,7 +72,11 @@ impl Store {
         }
     }
 
-    pub async fn add_question(self, new_question: NewQuestion, account_id: AccountId) -> Result<Question, Error> {
+    pub async fn add_question(
+        self,
+        new_question: NewQuestion,
+        account_id: AccountId,
+    ) -> Result<Question, Error> {
         match sqlx::query("INSERT INTO questions (title, content, tags, account_id) VALUES ($1, $2, $3, $4) RETURNING id, title, content, tags")
             .bind(new_question.title)
             .bind(new_question.content)
@@ -91,7 +98,12 @@ impl Store {
             }
     }
 
-    pub async fn update_question(self, question: Question, id: i32, account_id: AccountId) -> Result<Question, Error> {
+    pub async fn update_question(
+        self,
+        question: Question,
+        id: i32,
+        account_id: AccountId,
+    ) -> Result<Question, Error> {
         match sqlx::query(
             "UPDATE questions SET title = $1, content = $2, tags = $3
         WHERE id = $4 AND account_id = $5
@@ -135,12 +147,14 @@ impl Store {
     }
 
     pub async fn add_answer(self, answer: Answer, account_id: AccountId) -> Result<bool, Error> {
-        match sqlx::query("INSERT INTO answers (content, corresponding_question, account_id) VALUES ($1, $2, $3)")
-            .bind(answer.content)
-            .bind(answer.question_id)
-            .bind(account_id.0)
-            .execute(&self.connection)
-            .await
+        match sqlx::query(
+            "INSERT INTO answers (content, corresponding_question, account_id) VALUES ($1, $2, $3)",
+        )
+        .bind(answer.content)
+        .bind(answer.question_id)
+        .bind(account_id.0)
+        .execute(&self.connection)
+        .await
         {
             Ok(_) => Ok(true),
             Err(error) => {
