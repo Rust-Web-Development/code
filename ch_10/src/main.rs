@@ -1,67 +1,36 @@
 #![warn(clippy::all)]
 
-use dotenv;
 use handle_errors::return_error;
+
 use tracing_subscriber::fmt::format::FmtSpan;
 use warp::{http::Method, Filter};
-use std::env;
 
-mod profanity;
 mod routes;
-mod store;
 mod types;
-
-use clap::Parser;
-
-/// Q&A web service API
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Which errors we want to log (info, warn or error)
-    #[clap(short, long, default_value = "warn")]
-    log_level: String,
-    /// URL for the postgres database
-    #[clap(long, default_value = "localhost")]
-    database_host: String,
-    /// PORT number for the database connection
-    #[clap(long, default_value = "5432")]
-    database_port: u16,
-    /// Database name
-    #[clap(long, default_value = "rustwebdev")]
-    database_name: String,
-}
+mod config;
+mod profanity;
+mod store;
 
 #[tokio::main]
 async fn main() -> Result<(), handle_errors::Error> {
-    dotenv::dotenv().ok();
+    let config = config::Config::new().expect("Config can't be set");
 
-    if let Err(_) = env::var("BAD_WORDS_API_KEY") {
-        panic!("BadWords API key not set");
-    }
-
-    let port = std::env::var("PORT")
-        .ok()
-        .map(|val| val.parse::<u16>())
-        .unwrap_or(Ok(8080))
-        .map_err(|e| handle_errors::Error::ParseError(e))?;
-
-    let args = Args::parse();
-
-    let log_filter = std::env::var("RUST_LOG").unwrap_or_else(|_| {
-        format!(
-            "handle_errors={},rust-web-dev={},warp={}",
-            args.log_level, args.log_level, args.log_level
-        )
-    });
+    let log_filter = format!(
+            "handle_errors={},rust_web_dev={},warp={}",
+            config.log_level, config.log_level, config.log_level
+        );
 
     let store = store::Store::new(&format!(
-        "postgres://{}:{}/{}",
-        args.database_host, args.database_port, args.database_name
+        "postgres://{}:{}@{}:{}/{}",
+        config.db_user, config.db_password, config.db_host, config.db_port, config.db_name
     ))
     .await
     .map_err(|e| handle_errors::Error::DatabaseQueryError(e))?;
 
-    sqlx::migrate!().run(&store.clone().connection).await.map_err(|e| handle_errors::Error::MigrationError(e))?;
+    sqlx::migrate!()
+        .run(&store.clone().connection)
+        .await
+        .map_err(|e| handle_errors::Error::MigrationError(e))?;
 
     let store_filter = warp::any().map(move || store.clone());
 
@@ -143,7 +112,9 @@ async fn main() -> Result<(), handle_errors::Error> {
         .with(warp::trace::request())
         .recover(return_error);
 
-    warp::serve(routes).run(([127, 0, 0, 1], port)).await;
+    tracing::info!("Q&A service build ID {}", env!("RUST_WEB_DEV_VERSION"));
+
+    warp::serve(routes).run(([0, 0, 0, 0], config.port)).await;
 
     Ok(())
 }

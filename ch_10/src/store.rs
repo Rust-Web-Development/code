@@ -18,6 +18,7 @@ pub struct Store {
 
 impl Store {
     pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
+        tracing::warn!("{}", db_url);
         let db_pool = PgPoolOptions::new()
             .max_connections(5)
             .connect(db_url)

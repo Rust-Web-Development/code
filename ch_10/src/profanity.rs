@@ -5,7 +5,6 @@ use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct APIResponse(String);
 
