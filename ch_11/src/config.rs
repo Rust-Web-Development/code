@@ -68,7 +68,7 @@ impl Config {
 
 #[cfg(test)]
 mod config_tests {
- use super::*;
+    use super::*;
 
     fn set_env() {
         env::set_var("BAD_WORDS_API_KEY", "yes");
@@ -80,24 +80,13 @@ mod config_tests {
         env::set_var("POSTGRES_DB", "rustwebdev");
     }
 
-    fn unset_env() {
-        env::remove_var("BAD_WORDS_API_KEY");
-        env::remove_var("PASETO_KEY");
-        env::remove_var("POSTGRES_USER");
-        env::remove_var("POSTGRES_PASSWORD");
-        env::remove_var("POSTGRES_HOST");
-        env::remove_var("POSTGRES_PORT");
-        env::remove_var("POSTGRES_DB");
-    }
-
     #[test]
     fn unset_and_set_api_key() {
-        let result = std::panic::catch_unwind(|| {
-            Config::new()
-        });
-
+        // ENV VARIABLES ARE NOT SET
+        let result = std::panic::catch_unwind(|| Config::new());
         assert!(result.is_err());
 
+        // NOW WE SET THEM
         set_env();
 
         let expected = Config {
@@ -113,7 +102,5 @@ mod config_tests {
         let config = Config::new().unwrap();
 
         assert_eq!(config, expected);
-
-        unset_env();
     }
 }

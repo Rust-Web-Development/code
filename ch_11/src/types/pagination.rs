@@ -53,8 +53,7 @@ pub fn extract_pagination(params: HashMap<String, String>) -> Result<Pagination,
 
 #[cfg(test)]
 mod pagination_tests {
-
-    use super::*;
+    use super::{extract_pagination, Error, HashMap, Pagination};
 
     #[test]
     fn valid_pagination() {
@@ -64,19 +63,30 @@ mod pagination_tests {
         let pagination_result = extract_pagination(params);
         let expected = Pagination {
             limit: Some(1),
-            offset: 1
+            offset: 1,
         };
         assert_eq!(pagination_result.unwrap(), expected);
     }
 
     #[test]
-    fn missing_paramater() {
+    fn missing_offset_paramater() {
         let mut params = HashMap::new();
         params.insert(String::from("limit"), String::from("1"));
 
         let pagination_result = format!("{}", extract_pagination(params).unwrap_err());
         let expected = format!("{}", Error::MissingParameters);
-        
+
+        assert_eq!(pagination_result, expected);
+    }
+
+    #[test]
+    fn missing_limit_paramater() {
+        let mut params = HashMap::new();
+        params.insert(String::from("offset"), String::from("1"));
+
+        let pagination_result = format!("{}", extract_pagination(params).unwrap_err());
+        let expected = format!("{}", Error::MissingParameters);
+
         assert_eq!(pagination_result, expected);
     }
 
@@ -86,7 +96,7 @@ mod pagination_tests {
         params.insert(String::from("limit"), String::from("1"));
         params.insert(String::from("offset"), String::from("NOT_A_NUMBER"));
         let pagination_result = format!("{}", extract_pagination(params).unwrap_err());
- 
+
         let expected = String::from("Cannot parse parameter: invalid digit found in string");
 
         assert_eq!(pagination_result, expected);
@@ -98,7 +108,7 @@ mod pagination_tests {
         params.insert(String::from("limit"), String::from("NOT_A_NUMBER"));
         params.insert(String::from("offset"), String::from("1"));
         let pagination_result = format!("{}", extract_pagination(params).unwrap_err());
- 
+
         let expected = String::from("Cannot parse parameter: invalid digit found in string");
 
         assert_eq!(pagination_result, expected);
