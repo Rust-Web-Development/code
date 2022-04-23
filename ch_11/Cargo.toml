@@ -1,0 +1,29 @@
+[package]
+name = "rust-web-dev"
+version = "1.0.0"
+authors = ["Bastian Gruber <code@recv.online>"]
+edition = "2018"
+
+[dependencies]
+warp = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.1.1", features = ["full"] }
+handle-errors = { path = "handle-errors", version = "0.1.0" }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = "0.2"
+sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
+reqwest = { version = "0.11", features = ["json"] }
+reqwest-middleware = "0.1.1"
+reqwest-retry = "0.1.1"
+rand = "0.8"
+rust-argon2 = "1.0"
+paseto = "2.0"
+chrono = "0.4.19"
+dotenv = "0.15.0"
+clap = { version = "3.1.7", features = ["derive"] }
+proc-macro2 = "1.0.37"
+openssl = { version = "0.10.32", features = ["vendored"] }
+
+[build-dependencies]
+platforms = "2.0.0"
