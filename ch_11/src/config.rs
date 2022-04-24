@@ -66,41 +66,41 @@ impl Config {
     }
 }
 
-// #[cfg(test)]
-// mod config_tests {
-//     use super::*;
+#[cfg(test)]
+mod config_tests {
+    use super::*;
 
-//     fn set_env() {
-//         env::set_var("BAD_WORDS_API_KEY", "yes");
-//         env::set_var("PASETO_KEY", "yes");
-//         env::set_var("POSTGRES_USER", "user");
-//         env::set_var("POSTGRES_PASSWORD", "pass");
-//         env::set_var("POSTGRES_HOST", "localhost");
-//         env::set_var("POSTGRES_PORT", "5432");
-//         env::set_var("POSTGRES_DB", "rustwebdev");
-//     }
+    fn set_env() {
+        env::set_var("BAD_WORDS_API_KEY", "API_KEY");
+        env::set_var("PASETO_KEY", "RANDOM WORDS WINTER MACINTOSH PC");
+        env::set_var("POSTGRES_USER", "user");
+        env::set_var("POSTGRES_PASSWORD", "pass");
+        env::set_var("POSTGRES_HOST", "localhost");
+        env::set_var("POSTGRES_PORT", "5432");
+        env::set_var("POSTGRES_DB", "rustwebdev");
+    }
 
-//     #[test]
-//     fn unset_and_set_api_key() {
-//         // ENV VARIABLES ARE NOT SET
-//         let result = std::panic::catch_unwind(|| Config::new());
-//         assert!(result.is_err());
+    #[test]
+    fn unset_and_set_api_key() {
+        // ENV VARIABLES ARE NOT SET
+        let result = std::panic::catch_unwind(|| Config::new());
+        assert!(result.is_err());
 
-//         // NOW WE SET THEM
-//         set_env();
+        // NOW WE SET THEM
+        set_env();
 
-//         let expected = Config {
-//             log_level: "warn".to_string(),
-//             port: 8080,
-//             db_user: "user".to_string(),
-//             db_password: "pass".to_string(),
-//             db_host: "localhost".to_string(),
-//             db_port: 5432,
-//             db_name: "rustwebdev".to_string(),
-//         };
+        let expected = Config {
+            log_level: "warn".to_string(),
+            port: 8080,
+            db_user: "user".to_string(),
+            db_password: "pass".to_string(),
+            db_host: "localhost".to_string(),
+            db_port: 5432,
+            db_name: "rustwebdev".to_string(),
+        };
 
-//         let config = Config::new().unwrap();
+        let config = Config::new().unwrap();
 
-//         assert_eq!(config, expected);
-//     }
-// }
+        assert_eq!(config, expected);
+    }
+}
