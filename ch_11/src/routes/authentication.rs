@@ -38,8 +38,18 @@ pub async fn login(store: Store, login: Account) -> Result<impl warp::Reply, war
                 handle_errors::Error::ArgonLibraryError(e),
             )),
         },
-        Err(e) => Err(warp::reject::custom(e)),
+        Err(_) => Err(warp::reject::custom(handle_errors::Error::WrongPassword)),
     }
+}
+
+fn hash_password(password: &[u8]) -> String {
+    let salt = rand::thread_rng().gen::<[u8; 32]>();
+    let config = Config::default();
+    argon2::hash_encoded(password, &salt, &config).unwrap()
+}
+
+fn verify_password(hash: &str, password: &[u8]) -> Result<bool, argon2::Error> {
+    argon2::verify_encoded(hash, password)
 }
 
 pub fn verify_token(token: String) -> Result<Session, handle_errors::Error> {
@@ -51,18 +61,7 @@ pub fn verify_token(token: String) -> Result<Session, handle_errors::Error> {
         &paseto::tokens::TimeBackend::Chrono,
     )
     .map_err(|_| handle_errors::Error::CannotDecryptToken)?;
-
     serde_json::from_value::<Session>(token).map_err(|_| handle_errors::Error::CannotDecryptToken)
-}
-
-fn hash_password(password: &[u8]) -> String {
-    let salt = rand::thread_rng().gen::<[u8; 32]>();
-    let config = Config::default();
-    argon2::hash_encoded(password, &salt, &config).unwrap()
-}
-
-fn verify_password(hash: &str, password: &[u8]) -> Result<bool, argon2::Error> {
-    argon2::verify_encoded(hash, password)
 }
 
 fn issue_token(account_id: AccountId) -> String {
@@ -84,9 +83,67 @@ pub fn auth() -> impl Filter<Extract = (Session,), Error = warp::Rejection> + Cl
     warp::header::<String>("Authorization").and_then(|token: String| {
         let token = match verify_token(token) {
             Ok(t) => t,
-            Err(_) => return future::ready(Err(warp::reject::reject())),
+            Err(_) => {
+                return future::ready(Err(warp::reject::custom(
+                    handle_errors::Error::Unauthorized,
+                )))
+            }
         };
 
         future::ready(Ok(token))
     })
+}
+
+#[cfg(test)]
+mod authentication_tests {
+    use super::{auth, env, issue_token, AccountId, Session};
+    use chrono::prelude::*;
+
+    #[tokio::test]
+    async fn post_questions_auth() {
+        env::set_var("PASETO_KEY", "RANDOM WORDS WINTER MACINTOSH PC");
+        let token = issue_token(AccountId(3));
+        let filter = auth();
+
+        let current_date_time = Utc::now();
+        let dt = current_date_time + chrono::Duration::days(1);
+
+        let res = warp::test::request()
+            .header("Authorization", token)
+            .filter(&filter);
+
+        let expected = Session {
+            exp: dt,
+            account_id: AccountId(3),
+            nbf: dt,
+        };
+
+        assert_eq!(expected.account_id, res.await.unwrap().account_id);
+    }
+
+    // #[tokio::test]
+    // async fn put_questions_auth() {
+    //     env::set_var("PASETO_KEY", "RANDOM WORDS WINTER MACINTOSH PC");
+    //     let token = issue_token(AccountId(3));
+    //     let filter = auth();
+
+    //     let current_date_time = Utc::now();
+    //     let dt = current_date_time + chrono::Duration::days(1);
+
+    //     let res = warp::test::request()
+    //         .method("PUT")
+    //         .path("/questions")
+    //         .header("Authorization", token)
+    //         .filter(&filter)
+    //         .await
+    //         .unwrap();
+
+    //     let expected = Session {
+    //         exp: dt,
+    //         account_id: AccountId(3),
+    //         nbf: dt,
+    //     };
+
+    //     assert_eq!(res.account_id, expected.account_id);
+    // }
 }

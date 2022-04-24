@@ -100,11 +100,9 @@ mod profanity_tests {
     }
 
     async fn censor_profane_words() {
-        
         let content = "This is a shitty sentence".to_string();
         let censored_content = check_profanity(content).await;
         assert_eq!(censored_content.unwrap(), "this is a ****** sentence");
-        
     }
 
     async fn no_profane_words() {

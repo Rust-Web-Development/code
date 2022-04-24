@@ -12,7 +12,6 @@ pub struct MockServer {
 
 pub struct OneshotHandler {
     pub sender: Sender<i32>,
-    pub port: u16,
 }
 
 impl MockServer {
@@ -73,7 +72,7 @@ impl MockServer {
         let (tx, rx) = oneshot::channel::<i32>();
         let routes = Self::build_routes(&self);
 
-        let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown(self.socket, async {
+        let (_, server) = warp::serve(routes).bind_with_graceful_shutdown(self.socket, async {
             rx.await.ok();
         });
 
@@ -81,7 +80,6 @@ impl MockServer {
 
         OneshotHandler {
             sender: tx,
-            port: addr.port(),
         }
     }
 }
