@@ -42,7 +42,6 @@ async fn main() -> Result<(), handle_errors::Error> {
         .output()
         .expect("sqlx command failed to start");
 
-    io::stdout().write_all(&s.stdout).unwrap();
     io::stdout().write_all(&s.stderr).unwrap();
 
     let s = Command::new("sqlx")
@@ -53,7 +52,6 @@ async fn main() -> Result<(), handle_errors::Error> {
             .output()
             .expect("sqlx command failed to start");
 
-    io::stdout().write_all(&s.stdout).unwrap();
     io::stdout().write_all(&s.stderr).unwrap();
 
     let store = setup_store(&config).await?;
