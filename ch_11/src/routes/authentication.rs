@@ -2,7 +2,7 @@ use argon2::{self, Config};
 use chrono::prelude::*;
 use rand::Rng;
 use std::{env, future};
-use warp::{http::StatusCode, Filter};
+use warp::Filter;
 
 use crate::store::Store;
 use crate::types::account::{Account, AccountId, Session};
@@ -17,7 +17,7 @@ pub async fn register(store: Store, account: Account) -> Result<impl warp::Reply
     };
 
     match store.add_account(account).await {
-        Ok(_) => Ok(warp::reply::with_status("Account added", StatusCode::OK)),
+        Ok(_) => Ok(warp::reply::json(&"Account added".to_string())),
         Err(e) => Err(warp::reject::custom(e)),
     }
 }
