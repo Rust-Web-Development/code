@@ -50,6 +50,6 @@ async fn main() {
         .map(|| format!("Hello, World!"));
 
     warp::serve(hello)
-        .run(([127, 0, 0, 1], 1337))
+        .run(([127, 0, 0, 1], 3030))
         .await;
 }
