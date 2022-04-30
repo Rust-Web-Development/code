@@ -1,15 +1,17 @@
 use std::str::FromStr;
 use std::io::{Error, ErrorKind};
-use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+use warp::Filter;
+
+#[derive(Debug)]
 struct Question {
     id: QuestionId,
     title: String,
     content: String,
     tags: Option<Vec<String>>,
 }
-#[derive(Debug, Serialize)]
+
+#[derive(Debug)]
 struct QuestionId(String);
 
 impl Question {
@@ -34,7 +36,8 @@ impl FromStr for QuestionId {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let question = Question::new(
         QuestionId::from_str("1").expect("No id provided"),
         "First Question".to_string(),
@@ -42,4 +45,11 @@ fn main() {
         Some(vec!("faq".to_string())),
     );
     println!("{:?}", question);
+
+    let hello = warp::get()
+        .map(|| format!("Hello, World!"));
+
+    warp::serve(hello)
+        .run(([127, 0, 0, 1], 1337))
+        .await;
 }
