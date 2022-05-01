@@ -52,7 +52,7 @@ impl Reject for InvalidId {}
 
 async fn get_questions() -> Result<impl warp::Reply, warp::Rejection> {
     let question = Question::new(
-        QuestionId::from_str("A").expect("No id provided"),
+        QuestionId::from_str("1").expect("No id provided"),
         "First Question".to_string(),
         "Content of question".to_string(),
         Some(vec!("faq".to_string())),
@@ -95,7 +95,7 @@ async fn main() {
     let cors = warp::cors()
         .allow_any_origin()
         .allow_header("content-type")
-        .allow_methods(&[Method::PUT, Method::DELETE]);
+        .allow_methods(&[Method::PUT, Method::DELETE, Method::GET, Method::POST]);
 
     let get_items = warp::get()
         .and(warp::path("questions"))
