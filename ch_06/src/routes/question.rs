@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use warp::http::StatusCode;
-use tracing::{instrument, event, Level};
+use tracing::{instrument, info};
 
 use handle_errors::Error;
 use crate::store::Store;
@@ -13,15 +13,15 @@ pub async fn get_questions(
     params: HashMap<String, String>,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    event!(target: "practical_rust_book", Level::INFO, "querying questions");
+    info!("querying questions");
     if !params.is_empty() {
         let pagination = extract_pagination(params)?;
-        event!(Level::INFO, pagination = true);
+        info!(pagination = true);
         let res: Vec<Question> = store.questions.read().values().cloned().collect();
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
-        event!(Level::INFO, pagination = false);
+        info!(pagination = false);
         let res: Vec<Question> = store.questions.read().values().cloned().collect();
         Ok(warp::reply::json(&res))
     }
