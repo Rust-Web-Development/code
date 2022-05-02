@@ -1,7 +1,7 @@
 #![warn(clippy::all)]
 
-use warp::{http::Method, Filter};
 use handle_errors::return_error;
+use warp::{http::Method, Filter};
 
 mod routes;
 mod store;
@@ -15,7 +15,7 @@ async fn main() {
     let cors = warp::cors()
         .allow_any_origin()
         .allow_header("content-type")
-        .allow_methods(&[Method::PUT, Method::DELETE]);
+        .allow_methods(&[Method::PUT, Method::DELETE, Method::GET, Method::POST]);
 
     let get_questions = warp::get()
         .and(warp::path("questions"))

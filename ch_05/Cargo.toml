@@ -10,4 +10,5 @@ parking_lot = "0.10.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.1.1", features = ["full"] }
-handle-errors = { path = "handle-errors", version = "0.1.0" }
+# We can omit the version number for local imports
+handle-errors = { path = "handle-errors" }

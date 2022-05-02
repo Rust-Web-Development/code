@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::types::{
-    answer::Answer,
+    answer::{Answer, AnswerId},
     question::{Question, QuestionId},
 };
 
 #[derive(Clone)]
 pub struct Store {
     pub questions: Arc<RwLock<HashMap<QuestionId, Question>>>,
-    pub answers: Arc<RwLock<HashMap<String, Answer>>>,
+    pub answers: Arc<RwLock<HashMap<AnswerId, Answer>>>,
 }
 
 impl Store {
