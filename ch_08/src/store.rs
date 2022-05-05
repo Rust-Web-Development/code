@@ -4,7 +4,7 @@ use sqlx::Row;
 use handle_errors::Error;
 
 use crate::types::{
-    answer::Answer,
+    answer::{AnswerId, NewAnswer, Answer},
     question::{NewQuestion, Question, QuestionId},
 };
 
@@ -112,29 +112,22 @@ impl Store {
         }
     }
 
-    pub async fn add_answer(self, answer: Answer) -> Result<bool, Error> {
-        match sqlx::query("INSERT INTO answers (content, corresponding_question) VALUES ($1, $2)")
-            .bind(answer.content)
-            .bind(answer.question_id)
-            .execute(&self.connection)
-            .await
-        {
-            Ok(_) => Ok(true),
-            Err(error) => {
-                tracing::event!(
-                    tracing::Level::ERROR,
-                    code = error
-                        .as_database_error()
-                        .unwrap()
-                        .code()
-                        .unwrap()
-                        .parse::<i32>()
-                        .unwrap(),
-                    db_message = error.as_database_error().unwrap().message(),
-                    constraint = error.as_database_error().unwrap().constraint().unwrap()
-                );
-                Err(Error::DatabaseQueryError)
+    pub async fn add_answer(&self, new_answer: NewAnswer) -> Result<Answer, Error> {
+        match sqlx::query("INSERT INTO answers (content, question_id) VALUES ($1, $2)")
+            .bind(new_answer.content)
+            .bind(new_answer.question_id.0)
+            .map(|row: PgRow| Answer {
+			    id: AnswerId(row.get("id")),
+			    content: row.get("content"),
+                question_id: QuestionId(row.get("question_id")),
+		    })
+            .fetch_one(&self.connection)
+            .await {
+                Ok(answer) => Ok(answer),
+                Err(e) => {
+                    tracing::event!(tracing::Level::ERROR, "{:?}", e);
+                    Err(Error::DatabaseQueryError)
+                },
             }
-        }
     }
 }

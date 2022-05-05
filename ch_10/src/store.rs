@@ -7,7 +7,7 @@ use handle_errors::Error;
 
 use crate::types::{
     account::{Account, AccountId},
-    answer::Answer,
+    answer::{NewAnswer, AnswerId, Answer},
     question::{NewQuestion, Question, QuestionId},
 };
 
@@ -147,17 +147,26 @@ impl Store {
         }
     }
 
-    pub async fn add_answer(self, answer: Answer, account_id: AccountId) -> Result<bool, Error> {
+    pub async fn add_answer(
+        self,
+        new_answer: NewAnswer,
+        account_id: AccountId,
+    ) -> Result<Answer, Error> {
         match sqlx::query(
             "INSERT INTO answers (content, corresponding_question, account_id) VALUES ($1, $2, $3)",
         )
-        .bind(answer.content)
-        .bind(answer.question_id)
+        .bind(new_answer.content)
+        .bind(new_answer.question_id.0)
         .bind(account_id.0)
-        .execute(&self.connection)
+        .map(|row: PgRow| Answer {
+            id: AnswerId(row.get("id")),
+            content: row.get("content"),
+            question_id: QuestionId(row.get("question_id")),
+        })
+        .fetch_one(&self.connection)
         .await
         {
-            Ok(_) => Ok(true),
+            Ok(answer) => Ok(answer),
             Err(error) => {
                 tracing::event!(
                     tracing::Level::ERROR,

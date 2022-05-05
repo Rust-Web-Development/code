@@ -7,24 +7,24 @@ use handle_errors::Error;
 #[derive(Default, Debug)]
 pub struct Pagination {
     /// The index of the last item which has to be returned
-    pub limit: Option<i32>,
+    pub limit: Option<u32>,
     /// The index of the first item which has to be returned
-    pub offset: i32,
+    pub offset: u32,
 }
 
 /// Extract query parameters from the `/questions` route
 /// # Example query
 /// GET requests to this route can have a pagination attached so we just
 /// return the questions we need
-/// `/questions?offset=1&limit=10`
+/// `/questions?start=1&end=10`
 /// # Example usage
 /// ```rust
-/// let query = HashMap::new();
-/// query.push("limit", "10");
-/// query.push("offset", "1");
+/// let mut query = HashMap::new();
+/// query.push("limit".to_string(), "1".to_string());
+/// query.push("offset".to_string(), "10".to_string());
 /// let p = types::pagination::extract_pagination(query).unwrap();
-/// assert_eq!(p.offset, 1);
-/// assert_eq!(p.limit, 10);
+/// assert_eq!(p.start, 1);
+/// assert_eq!(p.end, 10);
 /// ```
 pub fn extract_pagination(params: HashMap<String, String>) -> Result<Pagination, Error> {
     // Could be improved in the future
@@ -34,13 +34,13 @@ pub fn extract_pagination(params: HashMap<String, String>) -> Result<Pagination,
             limit: Some(params
                 .get("limit")
                 .unwrap()
-                .parse()
+                .parse::<u32>()
                 .map_err(Error::ParseError)?),
             // Takes the "offset" parameter in the query and tries to convert it to a number
             offset: params
                 .get("offset")
                 .unwrap()
-                .parse()
+                .parse::<u32>()
                 .map_err(Error::ParseError)?,
 
         });

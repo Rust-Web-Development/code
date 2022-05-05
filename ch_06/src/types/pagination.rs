@@ -19,9 +19,9 @@ pub struct Pagination {
 /// `/questions?start=1&end=10`
 /// # Example usage
 /// ```rust
-/// let query = HashMap::new();
-/// query.push("start", "1");
-/// query.push("end", "10");
+/// let mut query = HashMap::new();
+/// query.push("start".to_string(), "1".to_string());
+/// query.push("end".to_string(), "10".to_string());
 /// let p = types::pagination::extract_pagination(query).unwrap();
 /// assert_eq!(p.start, 1);
 /// assert_eq!(p.end, 10);
