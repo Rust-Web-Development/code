@@ -10,7 +10,7 @@ pub mod config;
 mod profanity;
 mod routes;
 mod store;
-mod types;
+pub mod types;
 
 pub struct OneshotHandler {
     pub sender: Sender<i32>,

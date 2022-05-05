@@ -41,7 +41,7 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
 
     let res = client
         .post(format!(
-            "{}/bad_words?censor_character={{censor_character}}",
+            "{}/bad_words?censor_character={{*}}",
             api_layer_url
         ))
         .header("apikey", api_key)

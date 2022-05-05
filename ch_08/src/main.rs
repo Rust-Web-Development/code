@@ -10,13 +10,13 @@ mod profanity;
 mod types;
 
 #[tokio::main]
-async fn main() -> Result<(), sqlx::Error> {
+async fn main() {
     let log_filter = std::env::var("RUST_LOG")
         .unwrap_or_else(|_| "handle_errors=warn,practical_rust_book=warn,warp=warn".to_owned());
 
-    let store = store::Store::new("postgres://localhost:5432/rustwebdev").await?;
+    let store = store::Store::new("postgres://localhost:5432/rustwebdev").await;
 
-    sqlx::migrate!().run(&store.clone().connection).await?;
+    sqlx::migrate!().run(&store.clone().connection).await.expect("Cannot run migrations");
 
     let store_filter = warp::any().map(move || store.clone());
 
@@ -79,6 +79,4 @@ async fn main() -> Result<(), sqlx::Error> {
         .recover(return_error);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
-
-    Ok(())
 }

@@ -20,12 +20,15 @@ pub struct Pagination {
 /// `/questions?start=1&end=10`
 /// # Example usage
 /// ```rust
+/// use std::collections::HashMap;
+/// use rust_web_dev::types::pagination::extract_pagination;
+/// 
 /// let mut query = HashMap::new();
-/// query.push("start".to_string(), "1".to_string());
-/// query.push("end".to_string(), "10".to_string());
-/// let p = types::pagination::extract_pagination(query).unwrap();
-/// assert_eq!(p.start, 1);
-/// assert_eq!(p.end, 10);
+/// query.insert("limit".to_string(), "1".to_string());
+/// query.insert("offset".to_string(), "10".to_string());
+/// let p = extract_pagination(query).unwrap();
+/// assert_eq!(p.limit, Some(1));
+/// assert_eq!(p.offset, 10);
 /// ```
 pub fn extract_pagination(params: HashMap<String, String>) -> Result<Pagination, Error> {
     // Could be improved in the future

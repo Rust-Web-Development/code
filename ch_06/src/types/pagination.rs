@@ -11,7 +11,6 @@ pub struct Pagination {
     /// The index of the last item which has to be returned
     pub end: usize,
 }
-
 /// Extract query parameters from the `/questions` route
 /// # Example query
 /// GET requests to this route can have a pagination attached so we just
@@ -19,10 +18,12 @@ pub struct Pagination {
 /// `/questions?start=1&end=10`
 /// # Example usage
 /// ```rust
+/// use std::collections::HashMap;
+/// 
 /// let mut query = HashMap::new();
-/// query.push("start".to_string(), "1".to_string());
-/// query.push("end".to_string(), "10".to_string());
-/// let p = types::pagination::extract_pagination(query).unwrap();
+/// query.insert("start".to_string(), "1".to_string());
+/// query.insert("end".to_string(), "10".to_string());
+/// let p = pagination::extract_pagination(query).unwrap();
 /// assert_eq!(p.start, 1);
 /// assert_eq!(p.end, 10);
 /// ```

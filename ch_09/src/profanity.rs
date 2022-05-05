@@ -32,7 +32,7 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
         .build();
 
     let res = client
-        .post("https://api.apilayer.com/bad_words?censor_character={censor_character}'")
+        .post("https://api.apilayer.com/bad_words?censor_character={*}'")
         .header("apikey", "prmpFcctJu7duXweQA5zL5i0fIXmtzqF")
         .body(content)
         .send()
