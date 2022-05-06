@@ -3,7 +3,9 @@ use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct APIResponse(String);
+pub struct APIResponse {
+    message: String
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct BadWord {
@@ -32,7 +34,7 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
         .build();
 
     let res = client
-        .post("https://api.apilayer.com/bad_words?censor_character={*}'")
+        .post("https://api.apilayer.com/bad_words?censor_character=*")
         .header("apikey", "prmpFcctJu7duXweQA5zL5i0fIXmtzqF")
         .body(content)
         .send()
@@ -40,17 +42,11 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
         .map_err(|e| handle_errors::Error::MiddlewareReqwestAPIError(e))?;
     
     if !res.status().is_success() {
-        let status = res.status().as_u16();
-        let message = res.json::<APIResponse>().await.unwrap();
-    
-        let err = handle_errors::APILayerError {
-            status,
-            message: message.0,
-        };
-    
-        if status < 500 {
+        if res.status().is_client_error() {
+            let err = transform_error(res).await;
             return Err(handle_errors::Error::ClientError(err));
         } else {
+            let err = transform_error(res).await;
             return Err(handle_errors::Error::ServerError(err));
         } 
     }
@@ -61,6 +57,13 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
             Err(e) => Err(handle_errors::Error::ReqwestAPIError(e)),
         }  
 } 
+
+async fn transform_error(res: reqwest::Response) -> handle_errors::APILayerError {
+    handle_errors::APILayerError {
+        status: res.status().as_u16(),
+        message: res.json::<APIResponse>().await.unwrap().message,
+    }
+}
 
 
 

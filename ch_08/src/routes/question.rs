@@ -40,19 +40,24 @@ pub async fn update_question(
 
     let (title, content) = tokio::join!(title, content);
 
-    if title.is_ok() && content.is_ok() {
-        let question = Question {
-            id: question.id,
-            title: title.unwrap(),
-            content: content.unwrap(),
-            tags: question.tags,
-        };
-        match store.update_question(question, id).await {
-            Ok(res) => Ok(warp::reply::json(&res)),
-            Err(e) => Err(warp::reject::custom(e)),
-        }
-    } else {
-        Err(warp::reject::custom(title.expect_err("Expected API call to have failed here")))
+    if title.is_err() {
+        return Err(warp::reject::custom(title.unwrap_err()));
+    }
+
+    if content.is_err() {
+        return Err(warp::reject::custom(content.unwrap_err()));
+    }
+
+    let question = Question {
+        id: question.id,
+        title: title.unwrap(),
+        content: content.unwrap(),
+        tags: question.tags,
+    };
+
+    match store.update_question(question, id).await {
+        Ok(res) => Ok(warp::reply::json(&res)),
+        Err(e) => Err(warp::reject::custom(e)),
     }
 }
 
@@ -87,7 +92,7 @@ pub async fn add_question(
     };
 
     match store.add_question(question).await {
-        Ok(_) => Ok(warp::reply::with_status("Question added", StatusCode::OK)),
+        Ok(question) => Ok(warp::reply::json(&question)),
         Err(e) => Err(warp::reject::custom(e)),
     }
 }
