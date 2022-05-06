@@ -1,12 +1,12 @@
 use std::env;
-
-use reqwest_middleware::ClientBuilder;
-use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
+use reqwest_middleware::ClientBuilder;
+use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct APIResponse(String);
+pub struct APIResponse {
+    message: String
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct BadWord {
@@ -26,7 +26,6 @@ struct BadWordsResponse {
     censored_content: String,
 }
 
-#[instrument]
 pub async fn check_profanity(content: String) -> Result<String, handle_errors::Error> {
     // We are already checking if the ENV VARIABLE is set inside main.rs, so safe to unwrap here
     let api_key = env::var("BAD_WORDS_API_KEY").expect("BAD WORDS API KEY NOT SET");
@@ -41,7 +40,7 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
 
     let res = client
         .post(format!(
-            "{}/bad_words?censor_character={{*}}",
+            "{}/bad_words?censor_character=*",
             api_layer_url
         ))
         .header("apikey", api_key)
@@ -51,24 +50,26 @@ pub async fn check_profanity(content: String) -> Result<String, handle_errors::E
         .map_err(handle_errors::Error::MiddlewareReqwestAPIError)?;
 
     if !res.status().is_success() {
-        let status = res.status().as_u16();
-        let message = res.json::<APIResponse>().await.unwrap();
-
-        let err = handle_errors::APILayerError {
-            status,
-            message: message.0,
-        };
-
-        if status < 500 {
+        if res.status().is_client_error() {
+            let err = transform_error(res).await;
             return Err(handle_errors::Error::ClientError(err));
         } else {
+            let err = transform_error(res).await;
             return Err(handle_errors::Error::ServerError(err));
-        }
+        } 
     }
-
-    match res.json::<BadWordsResponse>().await {
-        Ok(res) => Ok(res.censored_content),
-        Err(e) => Err(handle_errors::Error::ReqwestAPIError(e)),
+    
+    match res.json::<BadWordsResponse>()
+        .await {
+            Ok(res) => Ok(res.censored_content),
+            Err(e) => Err(handle_errors::Error::ReqwestAPIError(e)),
+        }  
+}
+    
+async fn transform_error(res: reqwest::Response) -> handle_errors::APILayerError {
+    handle_errors::APILayerError {
+        status: res.status().as_u16(),
+        message: res.json::<APIResponse>().await.unwrap().message,
     }
 }
 
