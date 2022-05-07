@@ -1,6 +1,8 @@
 use std::process::Command;
 use std::io::{self, Write};
 
+use futures_util::future::FutureExt;
+
 use rust_web_dev::{config, handle_errors, oneshot, setup_store};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -63,52 +65,67 @@ async fn main() -> Result<(), handle_errors::Error> {
         password: "password".to_string(),
     };
 
-    register_new_user(&u).await?;
-    let token = login(u).await?;
-    post_question(token).await?;
+    let token;
+
+    print!("Running register_new_user...");
+    match std::panic::AssertUnwindSafe(register_new_user(&u)).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => std::process::exit(1),
+    }
+
+    print!("Running login...");
+    match std::panic::AssertUnwindSafe(login(u)).catch_unwind().await {
+        Ok(t) => {
+            token = t;
+            println!("✓")
+        },
+        Err(_) => std::process::exit(1),
+    }
+    
+    print!("Running post_question...");
+    match std::panic::AssertUnwindSafe(post_question(token)).catch_unwind().await {
+        Ok(_) => println!("✓"),
+        Err(_) => std::process::exit(1),
+    }
 
     let _ = handler.sender.send(1);
 
     Ok(())
 }
 
-async fn register_new_user(user: &User) -> Result<(), handle_errors::Error> {
+async fn register_new_user(user: &User) {
     let client = reqwest::Client::new();
     let res = client
         .post("http://localhost:3030/registration")
         .json(&user)
         .send()
         .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?
+        .unwrap()
         .json::<Value>()
-        .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?;
+        .await;
 
-    assert_eq!(res, "Account added".to_string());
+    assert_eq!(res.unwrap(), "Account added".to_string());
 
-    Ok(())
 }
 
-async fn login(user: User) -> Result<Token, handle_errors::Error> {
+async fn login(user: User) -> Token {
     let client = reqwest::Client::new();
     let res = client
         .post("http://localhost:3030/login")
         .json(&user)
         .send()
         .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?;
+        .unwrap();
 
     assert_eq!(res.status(), 200);
 
-    let token = res
+    res
         .json::<Token>()
         .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?;
-
-    Ok(token)
+        .unwrap()
 }
 
-async fn post_question(token: Token) -> Result<(), handle_errors::Error> {
+async fn post_question(token: Token) {
     let q = Question {
         title: "First Question".to_string(),
         content: "How can I test?".to_string(),
@@ -121,13 +138,11 @@ async fn post_question(token: Token) -> Result<(), handle_errors::Error> {
         .json(&q)
         .send()
         .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?
+        .unwrap()
         .json::<QuestionAnswer>()
         .await
-        .map_err(handle_errors::Error::ReqwestAPIError)?;
+        .unwrap();
 
     assert_eq!(res.id, 1);
     assert_eq!(res.title, q.title);
-
-    Ok(())
 }
