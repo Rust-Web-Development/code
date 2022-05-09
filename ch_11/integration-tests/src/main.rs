@@ -54,12 +54,16 @@ async fn main() -> Result<(), handle_errors::Error> {
             .output()
             .expect("sqlx command failed to start");
 
+    // Exdcute DB commands to drop and create a new test database
     io::stdout().write_all(&s.stderr).unwrap();
 
+    // set up a new store instance with a db connection pool
     let store = setup_store(&config).await?;
 
+    // start the server and listen for a sender signal to shut it down
     let handler = oneshot(store).await;
 
+    // create a test user to use throughout the tests
     let u = User {
         email: "test@email.com".to_string(),
         password: "password".to_string(),
@@ -68,24 +72,34 @@ async fn main() -> Result<(), handle_errors::Error> {
     let token;
 
     print!("Running register_new_user...");
-    match std::panic::AssertUnwindSafe(register_new_user(&u)).catch_unwind().await {
+    let result = std::panic::AssertUnwindSafe(register_new_user(&u)).catch_unwind().await;
+    match result {
         Ok(_) => println!("✓"),
-        Err(_) => std::process::exit(1),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
     }
 
     print!("Running login...");
     match std::panic::AssertUnwindSafe(login(u)).catch_unwind().await {
         Ok(t) => {
             token = t;
-            println!("✓")
+            println!("✓");
         },
-        Err(_) => std::process::exit(1),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
     }
     
     print!("Running post_question...");
     match std::panic::AssertUnwindSafe(post_question(token)).catch_unwind().await {
         Ok(_) => println!("✓"),
-        Err(_) => std::process::exit(1),
+        Err(_) => {
+            let _ = handler.sender.send(1);
+            std::process::exit(1);
+        }
     }
 
     let _ = handler.sender.send(1);
