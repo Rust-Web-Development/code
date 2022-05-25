@@ -16,6 +16,7 @@ use warp::{
     http::StatusCode
 };
 
+#[derive(Clone)]
 struct Store {
     questions: HashMap<QuestionId, Question>,
 }

@@ -50,7 +50,7 @@ impl FromStr for QuestionId {
 struct InvalidId;
 impl Reject for InvalidId {}
 
-async fn get_questions() -> Result<impl warp::Reply, warp::Rejection> {
+async fn get_questions() -> Result<impl Reply, Rejection> {
     let question = Question::new(
         QuestionId::from_str("1").expect("No id provided"),
         "First Question".to_string(),
