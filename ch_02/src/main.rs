@@ -38,14 +38,6 @@ impl FromStr for QuestionId {
 
 #[tokio::main]
 async fn main() {
-    let question = Question::new(
-        QuestionId::from_str("1").expect("No id provided"),
-        "First Question".to_string(),
-        "Content of question".to_string(),
-        Some(vec!("faq".to_string())),
-    );
-    println!("{:?}", question);
-
     let hello = warp::get()
         .map(|| format!("Hello, World!"));
 
