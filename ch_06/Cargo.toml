@@ -1,8 +1,7 @@
 [package]
 name = "practical-rust-book"
 version = "0.1.0"
-authors = ["Bastian Gruber <foreach@me.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 warp = "0.3"
