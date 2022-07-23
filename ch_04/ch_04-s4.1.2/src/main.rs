@@ -40,7 +40,7 @@ impl Store {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct Question {
     id: QuestionId,
     title: String,
