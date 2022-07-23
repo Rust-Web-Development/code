@@ -1,4 +1,3 @@
-use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use warp::{
@@ -8,6 +7,8 @@ use warp::{
     reject::Reject,
     Filter, Rejection, Reply,
 };
+
+use tokio::sync::RwLock;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct Question {
@@ -123,11 +124,11 @@ async fn get_questions(
 ) -> Result<impl warp::Reply, warp::Rejection> {
     if !params.is_empty() {
         let pagination = extract_pagination(params)?;
-        let res: Vec<Question> = store.questions.read().values().cloned().collect();
+        let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
-        let res: Vec<Question> = store.questions.read().values().cloned().collect();
+        let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
         Ok(warp::reply::json(&res))
     }
 }
@@ -139,6 +140,7 @@ async fn add_question(
     store
         .questions
         .write()
+        .await
         .insert(question.id.clone(), question);
 
     Ok(warp::reply::with_status("Question added", StatusCode::OK))
@@ -149,7 +151,7 @@ async fn update_question(
     store: Store,
     question: Question,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    match store.questions.write().get_mut(&QuestionId(id)) {
+    match store.questions.write().await.get_mut(&QuestionId(id)) {
         Some(q) => *q = question,
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -158,7 +160,7 @@ async fn update_question(
 }
 
 async fn delete_question(id: String, store: Store) -> Result<impl warp::Reply, warp::Rejection> {
-    match store.questions.write().remove(&QuestionId(id)) {
+    match store.questions.write().await.remove(&QuestionId(id)) {
         Some(_) => return Ok(warp::reply::with_status("Question deleted", StatusCode::OK)),
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -174,7 +176,11 @@ async fn add_answer(
         question_id: QuestionId(params.get("questionId").unwrap().to_string()),
     };
 
-    store.answers.write().insert(answer.id.clone(), answer);
+    store
+        .answers
+        .write()
+        .await
+        .insert(answer.id.clone(), answer);
 
     Ok(warp::reply::with_status("Answer added", StatusCode::OK))
 }
