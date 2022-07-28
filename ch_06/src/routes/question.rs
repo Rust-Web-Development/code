@@ -17,12 +17,12 @@ pub async fn get_questions(
     if !params.is_empty() {
         let pagination = extract_pagination(params)?;
         info!(pagination = true);
-        let res: Vec<Question> = store.questions.read().values().cloned().collect();
+        let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
         let res = &res[pagination.start..pagination.end];
         Ok(warp::reply::json(&res))
     } else {
         info!(pagination = false);
-        let res: Vec<Question> = store.questions.read().values().cloned().collect();
+        let res: Vec<Question> = store.questions.read().await.values().cloned().collect();
         Ok(warp::reply::json(&res))
     }
 }
@@ -32,7 +32,7 @@ pub async fn update_question(
     store: Store,
     question: Question,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    match store.questions.write().get_mut(&QuestionId(id)) {
+    match store.questions.write().await.get_mut(&QuestionId(id)) {
         Some(q) => *q = question,
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -44,7 +44,7 @@ pub async fn delete_question(
     id: String,
     store: Store,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    match store.questions.write().remove(&QuestionId(id)) {
+    match store.questions.write().await.remove(&QuestionId(id)) {
         Some(_) => (),
         None => return Err(warp::reject::custom(Error::QuestionNotFound)),
     }
@@ -59,6 +59,7 @@ pub async fn add_question(
     store
         .questions
         .write()
+        .await
         .insert(question.clone().id, question);
 
     Ok(warp::reply::with_status("Question added", StatusCode::OK))

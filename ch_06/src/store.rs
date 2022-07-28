@@ -1,4 +1,4 @@
-use parking_lot::RwLock;
+use tokio::sync::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 
