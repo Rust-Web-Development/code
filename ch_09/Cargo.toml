@@ -10,7 +10,7 @@ serde_json = "1.0"
 tokio = { version = "1.1.1", features = ["full"] }
 handle-errors = { path = "handle-errors", version = "0.1.0" }
 log = "0.4"
-env_logger = "0.8"
+env_logger = "0.9"
 log4rs = "1.0"
 uuid = { version = "0.8", features = ["serde", "v4"] }
 tracing = { version = "0.1", features = ["log"] }
