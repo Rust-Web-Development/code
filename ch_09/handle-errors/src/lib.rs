@@ -55,6 +55,8 @@ impl std::fmt::Display for Error {
     }
 }
 
+const DUPLICATE_KEY: u32 = 23505;
+
 impl Reject for Error {}
 impl Reject for APILayerError {}
 
@@ -65,7 +67,7 @@ pub async fn return_error(r: Rejection) -> Result<impl Reply, Rejection> {
 
         match e {
             sqlx::Error::Database(err) => {
-                if err.code().unwrap().parse::<i32>().unwrap() == 23505 {
+                if err.code().unwrap().parse::<u32>().unwrap() == DUPLICATE_KEY {
                     Ok(warp::reply::with_status(
                         "Account already exsists".to_string(),
                         StatusCode::UNPROCESSABLE_ENTITY,

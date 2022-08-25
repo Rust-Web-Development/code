@@ -72,7 +72,7 @@ mod pagination_tests {
     }
 
     #[test]
-    fn missing_offset_paramater() {
+    fn missing_offset_parameter() {
         let mut params = HashMap::new();
         params.insert(String::from("limit"), String::from("1"));
 
