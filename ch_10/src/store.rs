@@ -7,7 +7,7 @@ use handle_errors::Error;
 
 use crate::types::{
     account::{Account, AccountId},
-    answer::{NewAnswer, AnswerId, Answer},
+    answer::{Answer, AnswerId, NewAnswer},
     question::{NewQuestion, Question, QuestionId},
 };
 
@@ -59,11 +59,13 @@ impl Store {
         question_id: i32,
         account_id: &AccountId,
     ) -> Result<bool, Error> {
-        match sqlx::query("SELECT * from questions where id = $1 and account_id = $2")
-            .bind(question_id)
-            .bind(account_id.0)
-            .fetch_optional(&self.connection)
-            .await
+        match sqlx::query(
+            "SELECT * from questions where id = $1 and account_id = $2",
+        )
+        .bind(question_id)
+        .bind(account_id.0)
+        .fetch_optional(&self.connection)
+        .await
         {
             Ok(question) => Ok(question.is_some()),
             Err(e) => {
@@ -132,12 +134,18 @@ impl Store {
         }
     }
 
-    pub async fn delete_question(self, id: i32, account_id: AccountId) -> Result<bool, Error> {
-        match sqlx::query("DELETE FROM questions WHERE id = $1 AND account_id = $2")
-            .bind(id)
-            .bind(account_id.0)
-            .execute(&self.connection)
-            .await
+    pub async fn delete_question(
+        self,
+        id: i32,
+        account_id: AccountId,
+    ) -> Result<bool, Error> {
+        match sqlx::query(
+            "DELETE FROM questions WHERE id = $1 AND account_id = $2",
+        )
+        .bind(id)
+        .bind(account_id.0)
+        .execute(&self.connection)
+        .await
         {
             Ok(_) => Ok(true),
             Err(e) => {
@@ -185,12 +193,17 @@ impl Store {
         }
     }
 
-    pub async fn add_account(self, account: Account) -> Result<bool, Error> {
-        match sqlx::query("INSERT INTO accounts (email, password) VALUES ($1, $2)")
-            .bind(account.email)
-            .bind(account.password)
-            .execute(&self.connection)
-            .await
+    pub async fn add_account(
+        self,
+        account: Account,
+    ) -> Result<bool, Error> {
+        match sqlx::query(
+            "INSERT INTO accounts (email, password) VALUES ($1, $2)",
+        )
+        .bind(account.email)
+        .bind(account.password)
+        .execute(&self.connection)
+        .await
         {
             Ok(_) => Ok(true),
             Err(error) => {
@@ -203,15 +216,23 @@ impl Store {
                         .unwrap()
                         .parse::<i32>()
                         .unwrap(),
-                    db_message = error.as_database_error().unwrap().message(),
-                    constraint = error.as_database_error().unwrap().constraint().unwrap()
+                    db_message =
+                        error.as_database_error().unwrap().message(),
+                    constraint = error
+                        .as_database_error()
+                        .unwrap()
+                        .constraint()
+                        .unwrap()
                 );
                 Err(Error::DatabaseQueryError(error))
             }
         }
     }
 
-    pub async fn get_account(self, email: String) -> Result<Account, Error> {
+    pub async fn get_account(
+        self,
+        email: String,
+    ) -> Result<Account, Error> {
         match sqlx::query("SELECT * from accounts where email = $1")
             .bind(email)
             .map(|row: PgRow| Account {

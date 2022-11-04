@@ -22,7 +22,9 @@ pub async fn add_answer(
     };
 
     match store.add_answer(answer, account_id).await {
-        Ok(_) => Ok(warp::reply::with_status("Answer added", StatusCode::OK)),
+        Ok(_) => {
+            Ok(warp::reply::with_status("Answer added", StatusCode::OK))
+        }
         Err(e) => Err(warp::reject::custom(e)),
     }
 }

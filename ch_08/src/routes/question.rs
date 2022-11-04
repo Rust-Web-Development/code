@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use tracing::{event, instrument, Level};
 use warp::http::StatusCode;
 
-use crate::store::Store;
 use crate::profanity::check_profanity;
+use crate::store::Store;
 use crate::types::pagination::{extract_pagination, Pagination};
 use crate::types::question::{NewQuestion, Question};
 
@@ -61,7 +61,10 @@ pub async fn update_question(
     }
 }
 
-pub async fn delete_question(id: i32, store: Store) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn delete_question(
+    id: i32,
+    store: Store,
+) -> Result<impl warp::Reply, warp::Rejection> {
     match store.delete_question(id).await {
         Ok(_) => Ok(warp::reply::with_status(
             format!("Question {} deleted", id),

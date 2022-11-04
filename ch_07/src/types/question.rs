@@ -14,5 +14,5 @@ pub struct QuestionId(pub i32);
 pub struct NewQuestion {
     pub title: String,
     pub content: String,
-    pub tags: Option<Vec<String>>,  
+    pub tags: Option<Vec<String>>,
 }
