@@ -100,10 +100,9 @@ async fn main() {
     let get_items = warp::get()
         .and(warp::path("questions"))
         .and(warp::path::end())
-        .and_then(get_questions)
-        .recover(return_error);
+        .and_then(get_questions);
 
-    let routes = get_items.with(cors);
+    let routes = get_items.with(cors).recover(return_error);
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
