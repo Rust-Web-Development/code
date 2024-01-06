@@ -2,3 +2,4 @@
 **/.DS_STORE
 **/.vscode
 **/.env
+Cargo.lock
