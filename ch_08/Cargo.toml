@@ -1,21 +1,19 @@
 [package]
 name = "practical-rust-book"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.1.1", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
 handle-errors = { path = "handle-errors", version = "0.1.0" }
 log = "0.4"
-env_logger = "0.8"
-log4rs = "1.0"
-uuid = { version = "0.8", features = ["v4"] }
+env_logger = "0.11"
 tracing = { version = "0.1", features = ["log"] }
-tracing-subscriber = "0.2"
-sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
-reqwest = { version = "0.11", features = ["json"] }
-reqwest-middleware = "0.1.1"
-reqwest-retry = "0.1.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls", "migrate", "postgres" ] }
+reqwest = { version = "0.12", features = ["json"] }
+reqwest-middleware = "0.4"
+reqwest-retry = "0.7"

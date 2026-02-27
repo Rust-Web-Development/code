@@ -1,10 +1,10 @@
 [package]
 name = "mock-server"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-tokio = { version = "1.1.1", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
 warp = "0.3"
 serde_json = "1.0"
-bytes = "1.1.0"
+bytes = "1"

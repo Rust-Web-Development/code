@@ -88,8 +88,11 @@ mod profanity_tests {
     }
 
     fn run_mock() -> OneshotHandler {
-        env::set_var("API_LAYER_URL", "http://127.0.0.1:3030");
-        env::set_var("BAD_WORDS_API_KEY", "YES");
+        // SAFETY: This test runs single-threaded; no other threads access env vars.
+        unsafe {
+            env::set_var("API_LAYER_URL", "http://127.0.0.1:3030");
+            env::set_var("BAD_WORDS_API_KEY", "YES");
+        }
 
         let socket = "127.0.0.1:3030"
             .to_string()

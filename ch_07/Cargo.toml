@@ -1,19 +1,17 @@
 [package]
 name = "practical-rust-book"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 warp = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.1.1", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
 # We can omit the version number for local imports
 handle-errors = { path = "handle-errors" }
 log = "0.4"
-env_logger = "0.9"
-log4rs = "1.0"
-uuid = { version = "0.8", features = ["v4"] }
+env_logger = "0.11"
 tracing = { version = "0.1", features = ["log"] }
-tracing-subscriber = "0.2"
-sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls", "migrate", "postgres" ] }

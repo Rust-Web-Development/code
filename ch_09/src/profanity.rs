@@ -44,7 +44,7 @@ pub async fn check_profanity(
         .body(content)
         .send()
         .await
-        .map_err(|e| handle_errors::Error::MiddlewareReqwestAPIError(e))?;
+        .map_err(handle_errors::Error::MiddlewareReqwestAPIError)?;
 
     if !res.status().is_success() {
         if res.status().is_client_error() {

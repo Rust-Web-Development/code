@@ -1,4 +1,4 @@
-use argon2::Error as ArgonError;
+use argon2::password_hash::Error as ArgonError;
 use reqwest::Error as ReqwestError;
 use reqwest_middleware::Error as MiddlewareReqwestError;
 use tracing::{event, instrument, Level};
@@ -38,8 +38,8 @@ impl std::fmt::Display for APILayerError {
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match &*self {
-            Error::ParseError(ref err) => {
+        match self {
+            Error::ParseError(err) => {
                 write!(f, "Cannot parse parameter: {}", err)
             }
             Error::MissingParameters => write!(f, "Missing parameter"),

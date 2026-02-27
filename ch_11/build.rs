@@ -1,4 +1,3 @@
-use platforms::*;
 use std::{borrow::Cow, process::Command};
 
 /// Generate the `cargo:` key output
@@ -29,15 +28,12 @@ pub fn generate_cargo_keys() {
 }
 
 fn get_platform() -> String {
-    let env_dash = if TARGET_ENV.is_some() { "-" } else { "" };
+    let arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+    let os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
+    let env = std::env::var("CARGO_CFG_TARGET_ENV").unwrap_or_default();
+    let env_dash = if env.is_empty() { "" } else { "-" };
 
-    format!(
-        "{}-{}{}{}",
-        TARGET_ARCH.as_str(),
-        TARGET_OS.as_str(),
-        env_dash,
-        TARGET_ENV.map(|x| x.as_str()).unwrap_or(""),
-    )
+    format!("{}-{}{}{}", arch, os, env_dash, env)
 }
 
 fn get_version(impl_commit: &str) -> String {

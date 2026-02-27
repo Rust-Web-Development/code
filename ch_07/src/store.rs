@@ -31,8 +31,8 @@ impl Store {
 
     pub async fn get_questions(
         &self,
-        limit: Option<u32>,
-        offset: u32,
+        limit: Option<i32>,
+        offset: i32,
     ) -> Result<Vec<Question>, Error> {
         match sqlx::query("SELECT * from questions LIMIT $1 OFFSET $2")
             .bind(limit)

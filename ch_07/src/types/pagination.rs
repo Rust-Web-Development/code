@@ -7,9 +7,9 @@ use handle_errors::Error;
 #[derive(Default, Debug)]
 pub struct Pagination {
     /// The index of the last item which has to be returned
-    pub limit: Option<u32>,
+    pub limit: Option<i32>,
     /// The index of the first item which has to be returned
-    pub offset: u32,
+    pub offset: i32,
 }
 
 /// Extract query parameters from the `/questions` route
@@ -39,14 +39,14 @@ pub fn extract_pagination(
                 params
                     .get("limit")
                     .unwrap()
-                    .parse::<u32>()
+                    .parse::<i32>()
                     .map_err(Error::ParseError)?,
             ),
             // Takes the "offset" parameter in the query and tries to convert it to a number
             offset: params
                 .get("offset")
                 .unwrap()
-                .parse::<u32>()
+                .parse::<i32>()
                 .map_err(Error::ParseError)?,
         });
     }

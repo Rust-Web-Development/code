@@ -32,7 +32,7 @@ struct Token(String);
 
 #[tokio::main]
 async fn main() -> Result<(), handle_errors::Error> {
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
     let config = config::Config::new().expect("Config can't be set");
 
     let s = Command::new("sqlx")

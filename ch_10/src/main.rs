@@ -29,12 +29,12 @@ async fn main() -> Result<(), handle_errors::Error> {
         config.db_name
     ))
     .await
-    .map_err(|e| handle_errors::Error::DatabaseQueryError(e))?;
+    .map_err(handle_errors::Error::DatabaseQueryError)?;
 
     sqlx::migrate!()
         .run(&store.clone().connection)
         .await
-        .map_err(|e| handle_errors::Error::MigrationError(e))?;
+        .map_err(handle_errors::Error::MigrationError)?;
 
     let store_filter = warp::any().map(move || store.clone());
 
