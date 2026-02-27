@@ -20,6 +20,13 @@ struct Question {
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 struct QuestionId(String);
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct NewQuestion {
+    title: String,
+    content: String,
+    tags: Option<Vec<String>>,
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
 struct AnswerId(String);
 
@@ -65,8 +72,8 @@ enum Error {
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match *self {
-            Error::ParseError(ref err) => write!(f, "Cannot parse parameter: {}", err),
+        match self {
+            Error::ParseError(err) => write!(f, "Cannot parse parameter: {}", err),
             Error::MissingParameters => write!(f, "Missing parameter"),
             Error::QuestionNotFound => write!(f, "Question not found"),
         }
@@ -135,8 +142,15 @@ async fn get_questions(
 
 async fn add_question(
     store: Store,
-    question: Question,
+    new_question: NewQuestion,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    let question = Question {
+        id: QuestionId(format!("q-{}", store.questions.read().await.len() + 1)),
+        title: new_question.title,
+        content: new_question.content,
+        tags: new_question.tags,
+    };
+
     store
         .questions
         .write()
